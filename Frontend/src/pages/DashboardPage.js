@@ -164,13 +164,13 @@ export default function DashboardPage() {
             {DAYS.map(day => (
               <div key={day} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                 <span style={{ fontSize: "14px", fontWeight: 600, color: "#2C1810" }}>{day}</span>
-                <input type="number" min="0" max="12" value={hours[day]}
-                  onChange={e => setHours(p => ({ ...p, [day]: Math.min(12, Math.max(0, Number(e.target.value))) }))}
+                <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={"hr_" + day} value={hours[day] === 0 ? "" : hours[day]}
+                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setHours(p => ({ ...p, [day]: v === "" ? 0 : Math.min(12, Number(v)) })); }}
+                  onKeyDown={e => { if (e.key === "Enter") { const idx = DAYS.indexOf(day); if (idx < DAYS.length - 1) { document.getElementById("hr_" + DAYS[idx + 1])?.focus(); } else { document.getElementById("saveHoursBtn")?.click(); } } }}
                   style={{ width: "68px", textAlign: "center", padding: "8px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
-              </div>
             ))}
             <p style={{ textAlign: "center", fontSize: "14px", fontWeight: 700, color: "#2C1810", margin: "16px 0" }}>Total Weekly Hours: {totalHours}hr</p>
-            <button onClick={handleSaveHours}
+            <button id="saveHoursBtn" onClick={handleSaveHours}
               style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "14px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
               Save Hours
             </button>
