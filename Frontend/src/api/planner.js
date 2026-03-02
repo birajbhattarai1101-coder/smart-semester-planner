@@ -1,7 +1,7 @@
 ﻿import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://smart-planner-api-uww8.onrender.com/api",
+  baseURL: "https://smart-planner-backend.onrender.com/api",
   headers: { "Content-Type": "application/json" },
   timeout: 30000,
 });
@@ -35,3 +35,4 @@ export const updateEmail    = (username, email) =>
   API.post("/user/email", { username, email });
 
 export const healthCheck    = () => API.get("/health");
+
