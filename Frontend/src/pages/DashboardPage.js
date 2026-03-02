@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [coverage, setCoverage]               = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, 0])));
+  const [checked, setChecked]                 = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, true])));
   const [hours, setHours]                     = useState(Object.fromEntries(DAYS.map(d => [d, 0])));
   const [tasks, setTasks]                     = useState([]);
   const [showHoursModal, setShowHoursModal]   = useState(false);
@@ -60,7 +61,9 @@ export default function DashboardPage() {
     setGenerating(true); setError("");
     try {
       await saveCoverage(user.username, coverage);
-      await generateSchedule(user.username, 0);
+      const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key);
+        if (selectedKeys.length === 0) { alert("Please select at least one subject."); setLoading(false); return; }
+        await generateSchedule(user.username, 0, selectedKeys, 0);
       setShowSuccessModal("schedule");
     } catch { setError("Failed to generate. Please set your availability first."); }
     finally { setGenerating(false); }
@@ -225,3 +228,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
