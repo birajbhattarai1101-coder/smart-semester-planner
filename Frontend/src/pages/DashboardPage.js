@@ -125,11 +125,17 @@ export default function DashboardPage() {
           <p style={{ fontSize: "13px", color: "#8C7B70", marginBottom: "24px" }}>Select the subjects you want to focus on this week.</p>
           {SUBJECTS.map((s, i) => (
             <div key={s.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: i < SUBJECTS.length - 1 ? "1px solid #F0EBE3" : "none" }}>
-              <span style={{ fontSize: "15px", fontWeight: 600, color: "#2C1810" }}>{s.label}</span>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={{ fontSize: "13px", color: "#8C7B70" }}>syllabus covered</span>
-                <input type="number" min="0" max="100" value={coverage[s.key]}
-                  onChange={e => setCoverage(p => ({ ...p, [s.key]: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                <div onClick={() => setChecked(p => ({...p, [s.key]: !p[s.key]}))}
+                  style={{ width: "20px", height: "20px", borderRadius: "5px", border: checked[s.key] ? "none" : "2px solid #C9B99A", background: checked[s.key] ? "#B8862E" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {checked[s.key] && <span style={{ color: "white", fontSize: "13px", fontWeight: 700 }}>&#10003;</span>}
+                </div>
+                <span style={{ fontSize: "15px", fontWeight: 600, color: checked[s.key] ? "#2C1810" : "#B0A090", textDecoration: checked[s.key] ? "none" : "line-through" }}>{s.label}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                {checked[s.key] && <span style={{ fontSize: "13px", color: "#8C7B70" }}>syllabus covered</span>}
+                {checked[s.key] && <input type="number" min="0" max="100" value={coverage[s.key]}
+                  onChange={e => setCoverage(p => ({ ...p, [s.key]: Math.min(100, Math.max(0, Number(e.target.value))) }))} />}
                   style={{ width: "62px", textAlign: "center", padding: "7px 8px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
               </div>
             </div>
@@ -228,5 +234,6 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
 
