@@ -5,25 +5,56 @@ import { useAuth } from "../context/AuthContext";
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const handleLogout = () => { logout(); navigate("/"); };
   if (!user) return null;
   const initial = user.username?.charAt(0).toUpperCase() || "S";
+
+  const linkStyle = (isActive) => ({
+    display: "block",
+    padding: "14px 0",
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "2px",
+    textDecoration: "none",
+    color: isActive ? "#B8862E" : "rgba(255,255,255,0.45)",
+    borderBottom: "1px solid rgba(255,255,255,0.07)",
+    transition: "color 150ms",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+  });
+
   return (
-    <aside className="sidebar">
-      <div className="sidebar-brand"><h2>Study<span>Flow</span></h2></div>
-      <nav className="nav-menu">
-        <NavLink to="/dashboard"    className={({ isActive }) => isActive ? "active" : ""}><i className="fa-solid fa-house" /> Dashboard</NavLink>
-        <NavLink to="/coverage"     className={({ isActive }) => isActive ? "active" : ""}><i className="fa-solid fa-chart-pie" /> Coverage</NavLink>
-        <NavLink to="/availability" className={({ isActive }) => isActive ? "active" : ""}><i className="fa-solid fa-clock" /> Availability</NavLink>
-        <NavLink to="/tasks"        className={({ isActive }) => isActive ? "active" : ""}><i className="fa-solid fa-list-check" /> Tasks</NavLink>
-        <NavLink to="/schedule"     className={({ isActive }) => isActive ? "active" : ""}><i className="fa-solid fa-calendar-days" /> Schedule</NavLink>
-        <button onClick={handleLogout}><i className="fa-solid fa-right-from-bracket" /> Log Out</button>
+    <aside style={{
+      width: "260px",
+      background: "#2C1810",
+      color: "white",
+      display: "flex",
+      flexDirection: "column",
+      padding: "36px 28px",
+      position: "fixed",
+      top: 0, left: 0,
+      height: "100vh",
+      zIndex: 100,
+      boxSizing: "border-box",
+    }}>
+      <div style={{ marginBottom: "52px" }}>
+        <h2 style={{ fontSize: "22px", fontWeight: 800, color: "white", letterSpacing: "-0.3px", margin: 0, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          StudyFlow
+        </h2>
+      </div>
+      <nav style={{ flex: 1 }}>
+        <NavLink to="/dashboard" style={({ isActive }) => linkStyle(isActive)}>DASHBOARD</NavLink>
+        <NavLink to="/schedule" style={({ isActive }) => linkStyle(isActive)}>SCHEDULE</NavLink>
+        <button onClick={() => { logout(); navigate("/"); }}
+          style={{ ...linkStyle(false), background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: "14px 0" }}>
+          LOG OUT
+        </button>
       </nav>
-      <div className="user-card">
-        <div className="avatar">{initial}</div>
-        <div className="user-info">
-          <p className="user-name">{user.username}</p>
-          <p className="user-role">6th Semester</p>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+        <div style={{ width: "38px", height: "38px", background: "#B8862E", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "15px", color: "white", flexShrink: 0 }}>
+          {initial}
+        </div>
+        <div>
+          <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "white" }}>{user.username}</p>
+          <p style={{ margin: "2px 0 0", fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>6th Semester</p>
         </div>
       </div>
     </aside>
