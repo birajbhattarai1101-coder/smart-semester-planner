@@ -10,6 +10,7 @@ for p in [ROOT_DIR, BASE_DIR, DB_DIR]:
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR, ".env"))
+
 from flask import Flask, request, jsonify
 from utils.csv_generator import generate_all_csvs
 generate_all_csvs()
@@ -167,5 +168,3 @@ def generate_schedule():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
-
-
