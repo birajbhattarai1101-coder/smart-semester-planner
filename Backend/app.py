@@ -25,7 +25,9 @@ from user_availability_db import upsert_availability, get_availability_for_user,
 from user_tasks_db import add_task, get_tasks_for_user, delete_task
 from notification_routes import notify_bp
 
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app, origins=["https://smart-semester-planner.onrender.com", "http://localhost:3000"])
 app.register_blueprint(notify_bp)
 
 def _ok(data, status=200): return jsonify({"status":"success","data":data}), status
@@ -168,3 +170,4 @@ def generate_schedule():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
+
