@@ -1,11 +1,12 @@
 ﻿import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { generateSchedule, notifyDeadline, notifyDaily, notifyWeekly } from "../api/planner";
 
 export default function ViewSchedulePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [schedule, setSchedule]         = useState([]);
   const [priorities, setPriorities]     = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -17,10 +18,16 @@ export default function ViewSchedulePage() {
   const loadSchedule = async () => {
     setLoading(true);
     try {
-      const res = await generateSchedule(user.username, 0);
-      const data = res.data.data;
-      setSchedule(data.schedule || []);
-      setPriorities(data.subject_priorities || []);
+      const stateData = location.state?.scheduleData;
+      if (stateData) {
+        setSchedule(stateData.schedule || []);
+        setPriorities(stateData.subject_priorities || []);
+      } else {
+        const res = await generateSchedule(user.username, 0);
+        const data = res.data.data;
+        setSchedule(data.schedule || []);
+        setPriorities(data.subject_priorities || []);
+      }
     } catch {}
     finally { setLoading(false); }
   };

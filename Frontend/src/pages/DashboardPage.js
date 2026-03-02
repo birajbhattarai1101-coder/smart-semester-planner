@@ -19,7 +19,8 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [coverage, setCoverage]               = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, 0])));
-  const [checked, setChecked]                 = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, true])));
+  const [lastSchedule, setLastSchedule] = useState(null);
+  const [checked, setChecked]                 = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, false])));
   const [hours, setHours]                     = useState(Object.fromEntries(DAYS.map(d => [d, 0])));
   const [tasks, setTasks]                     = useState([]);
   const [showHoursModal, setShowHoursModal]   = useState(false);
@@ -64,7 +65,7 @@ export default function DashboardPage() {
       const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key);
         if (selectedKeys.length === 0) { alert("Please select at least one subject."); setLoading(false); return; }
         await generateSchedule(user.username, 0, selectedKeys, 0);
-      setShowSuccessModal("schedule");
+      setLastSchedule(res.data.data); setShowSuccessModal("schedule");
     } catch { setError("Failed to generate. Please set your availability first."); }
     finally { setGenerating(false); }
   };
@@ -130,19 +131,23 @@ export default function DashboardPage() {
                   style={{ width: "20px", height: "20px", borderRadius: "5px", border: checked[s.key] ? "none" : "2px solid #C9B99A", background: checked[s.key] ? "#B8862E" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   {checked[s.key] && <span style={{ color: "white", fontSize: "13px", fontWeight: 700 }}>&#10003;</span>}
                 </div>
-                <span style={{ fontSize: "15px", fontWeight: 600, color: checked[s.key] ? "#2C1810" : "#B0A090", textDecoration: checked[s.key] ? "none" : "line-through" }}>{s.label}</span>
+                <span style={{ fontSize: "15px", fontWeight: 600, color: "#2C1810" }}>{s.label}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 {checked[s.key] && <span style={{ fontSize: "13px", color: "#8C7B70" }}>syllabus covered</span>}
-                {checked[s.key] && <input type="number" min="0" max="100" value={coverage[s.key]}
-                  onChange={e => setCoverage(p => ({ ...p, [s.key]: Math.min(100, Math.max(0, Number(e.target.value))) }))} />}
+                {checked[s.key] && <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="%" value={coverage[s.key] === 0 ? "" : coverage[s.key]}
+                  id={"cov_" + s.key}
+                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setCoverage(p => ({ ...p, [s.key]: v === "" ? 0 : Math.min(100, Number(v)) })); }}
                   style={{ width: "62px", textAlign: "center", padding: "7px 8px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
+                  <span style={{ fontSize: "13px", color: "#8C7B70", marginLeft: "4px" }}>%</span>
+                </div>}
               </div>
             </div>
           ))}
         </div>
 
-        <button onClick={handleGenerate} disabled={generating}
+        <button id="generateBtn" onClick={handleGenerate} disabled={generating}
           style={{ width: "100%", background: "#2C1810", color: "white", border: "none", padding: "18px", borderRadius: "12px", fontSize: "16px", fontWeight: 700, cursor: generating ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: generating ? 0.8 : 1 }}>
           {generating ? "Generating..." : "Generate Study Schedule"}
         </button>
@@ -224,7 +229,7 @@ export default function DashboardPage() {
             <p style={{ fontSize: "13px", color: "#8C7B70", marginBottom: "28px", lineHeight: 1.7 }}>
               {showSuccessModal === "hours" ? "Your weekly study capacity has been updated for your 6th-semester subjects." : "Your weekly plan has been optimized successfully."}
             </p>
-            <button onClick={() => { if (showSuccessModal === "schedule") { setShowSuccessModal(null); navigate("/view-schedule"); } else setShowSuccessModal(null); }}
+            <button onClick={() => { if (showSuccessModal === "schedule") { setShowSuccessModal(null); navigate("/view-schedule", { state: { scheduleData: lastSchedule } }); } else setShowSuccessModal(null); }}
               style={{ background: "#2C1810", color: "white", border: "none", padding: "13px 40px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
               {showSuccessModal === "hours" ? "Got it!" : "View Schedule"}
             </button>
