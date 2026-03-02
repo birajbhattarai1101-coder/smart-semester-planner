@@ -40,7 +40,7 @@ body { font-family: var(--font-body); background-color: var(--cream); color: var
 .user-name { font-weight: 700; color: white; }
 .user-role { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 2px !important; }
 
-.main-content { margin-left: var(--sidebar-width); padding: 45px 60px; min-height: 100vh; }
+.main-content { margin-left: var(--sidebar-width); padding: 45px 60px; width: calc(100% - var(--sidebar-width)); min-height: 100vh; }
 
 .page-header { margin-bottom: 35px; }
 .page-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--espresso); margin-bottom: 6px; }
@@ -109,3 +109,4 @@ body { font-family: var(--font-body); background-color: var(--cream); color: var
   .nav-menu { display: flex; flex-direction: row; flex-wrap: wrap; }
   .nav-menu a, .nav-menu button { padding: 8px 12px; border-bottom: none; }
 }
+
