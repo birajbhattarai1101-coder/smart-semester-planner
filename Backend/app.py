@@ -27,7 +27,7 @@ from notification_routes import notify_bp
 
 from flask_cors import CORS
 app = Flask(__name__)
-CORS(app, origins=["https://smart-semester-planner.onrender.com", "http://localhost:3000"])
+CORS(app)
 app.register_blueprint(notify_bp)
 
 def _ok(data, status=200): return jsonify({"status":"success","data":data}), status
@@ -170,4 +170,5 @@ def generate_schedule():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
+
 
