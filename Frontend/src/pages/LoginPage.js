@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { registerUser, loginUser } from "../api/planner";
 import { useAuth } from "../context/AuthContext";
 
+const ILLUSTRATION = "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80";
+
 export default function LoginPage({ initialMode = "login" }) {
   const [mode, setMode]         = useState(initialMode);
   const [username, setUsername] = useState("");
@@ -17,12 +19,8 @@ export default function LoginPage({ initialMode = "login" }) {
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      if (mode === "register") {
-        await registerUser(username, password, email || undefined);
-        await loginUser(username, password);
-      } else {
-        await loginUser(username, password);
-      }
+      if (mode === "register") await registerUser(username, password, email || undefined);
+      await loginUser(username, password);
       login(username);
       navigate("/dashboard");
     } catch (err) {
@@ -30,69 +28,84 @@ export default function LoginPage({ initialMode = "login" }) {
     } finally { setLoading(false); }
   };
 
+  const inputStyle = {
+    flex: 1, border: "none", outline: "none", fontSize: "15px",
+    color: "#2C1810", background: "transparent", fontFamily: "inherit", padding: "8px 0"
+  };
+  const rowStyle = {
+    display: "flex", alignItems: "center", gap: "14px",
+    borderBottom: "1.5px solid #C9B99A", paddingBottom: "4px", marginBottom: "28px"
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: "#EDEBE7", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "20px" }}>
-      <div style={{ display: "flex", width: "800px", maxWidth: "100%", borderRadius: "20px", overflow: "hidden", boxShadow: "0 20px 60px rgba(44,24,16,0.18)", background: "white" }}>
-        <div style={{ width: "52%", padding: "56px 48px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <h2 style={{ fontSize: "26px", fontWeight: 800, color: "#2C1810", marginBottom: "6px" }}>
-            {mode === "login" ? "Welcome Back" : "Create Account"}
+      <div style={{ display: "flex", width: "860px", maxWidth: "100%", borderRadius: "20px", overflow: "hidden", boxShadow: "0 24px 64px rgba(44,24,16,0.18)", background: "white" }}>
+
+        <div style={{ width: "48%", background: "#E8DDD0", position: "relative", overflow: "hidden", minHeight: "520px" }}>
+          <img
+            src={ILLUSTRATION}
+            alt="student studying"
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            onError={e => {
+              e.target.style.display = "none";
+              e.target.parentElement.style.background = "linear-gradient(135deg, #E8DDD0 0%, #D4C4B0 100%)";
+              const div = document.createElement("div");
+              div.style.cssText = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:80px;";
+              div.textContent = "🧑‍💻";
+              e.target.parentElement.appendChild(div);
+            }}
+          />
+        </div>
+
+        <div style={{ width: "52%", padding: "56px 52px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <h2 style={{ fontSize: "28px", fontWeight: 800, color: "#2C1810", marginBottom: "6px", textAlign: "center" }}>
+            {mode === "login" ? "Log In" : "Create Account"}
           </h2>
-          <p style={{ fontSize: "13px", color: "#9A8880", marginBottom: "36px" }}>
-            {mode === "login" ? "Sign in to your account" : "Join the Smart Semester community"}
+          <p style={{ fontSize: "14px", color: "#9A8880", marginBottom: "40px", textAlign: "center" }}>
+            {mode === "login" ? "Welcome back to your planner" : "Join the Smart Semester community"}
           </p>
+
           {error && (
             <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#DC2626", marginBottom: "20px" }}>
               {error}
             </div>
           )}
+
           <form onSubmit={handleSubmit}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", borderBottom: "1.5px solid #DDD6CE", paddingBottom: "6px", marginBottom: "24px" }}>
-              <i className="fa-solid fa-user" style={{ color: "#B8862E", fontSize: "14px", width: "16px", flexShrink: 0 }} />
-              <input type="text" placeholder="User Name" value={username} onChange={e => setUsername(e.target.value)} required autoFocus
-                style={{ flex: 1, border: "none", outline: "none", fontSize: "14px", color: "#2C1810", background: "transparent", fontFamily: "inherit", padding: "6px 0" }} />
+            <div style={rowStyle}>
+              <span style={{ color: "#B8862E", fontSize: "16px" }}>👤</span>
+              <input type="text" placeholder="User Name" value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={inputStyle} />
             </div>
+
             {mode === "register" && (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", borderBottom: "1.5px solid #DDD6CE", paddingBottom: "6px", marginBottom: "24px" }}>
-                <i className="fa-solid fa-envelope" style={{ color: "#B8862E", fontSize: "14px", width: "16px", flexShrink: 0 }} />
-                <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)}
-                  style={{ flex: 1, border: "none", outline: "none", fontSize: "14px", color: "#2C1810", background: "transparent", fontFamily: "inherit", padding: "6px 0" }} />
+              <div style={rowStyle}>
+                <span style={{ color: "#B8862E", fontSize: "16px" }}>✉️</span>
+                <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
               </div>
             )}
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", borderBottom: "1.5px solid #DDD6CE", paddingBottom: "6px", marginBottom: "36px" }}>
-              <i className="fa-solid fa-lock" style={{ color: "#B8862E", fontSize: "14px", width: "16px", flexShrink: 0 }} />
-              <input type={showPass ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required
-                style={{ flex: 1, border: "none", outline: "none", fontSize: "14px", color: "#2C1810", background: "transparent", fontFamily: "inherit", padding: "6px 0" }} />
+
+            <div style={rowStyle}>
+              <span style={{ color: "#B8862E", fontSize: "16px" }}>🔒</span>
+              <input type={showPass ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={inputStyle} />
               <button type="button" onClick={() => setShowPass(!showPass)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#B8862E", padding: "4px", fontSize: "14px" }}>
-                <i className={"fa-solid " + (showPass ? "fa-eye-slash" : "fa-eye")} />
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#B8862E", padding: "4px", fontSize: "16px" }}>
+                {showPass ? "🙈" : "👁️"}
               </button>
             </div>
+
             <button type="submit" disabled={loading}
-              style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "14px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", marginBottom: "20px", opacity: loading ? 0.7 : 1 }}>
+              style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "15px", borderRadius: "8px", fontSize: "16px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", marginBottom: "22px", opacity: loading ? 0.7 : 1 }}>
               {loading ? "Please wait..." : mode === "login" ? "Log In" : "Sign Up"}
             </button>
           </form>
-          <p style={{ textAlign: "center", fontSize: "13px", color: "#9A8880" }}>
-            {mode === "login" ? "Dont have an account? " : "Already have an account? "}
+
+          <p style={{ textAlign: "center", fontSize: "14px", color: "#6B5A4E" }}>
+            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
             <button onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
-              style={{ background: "none", border: "none", color: "#B8862E", fontWeight: 700, cursor: "pointer", fontSize: "13px", fontFamily: "inherit" }}>
-              {mode === "login" ? "Sign Up" : "Log In"}
+              style={{ background: "none", border: "none", color: "#B8862E", fontWeight: 700, cursor: "pointer", fontSize: "14px", fontFamily: "inherit" }}>
+              {mode === "login" ? "Register" : "Log In"}
             </button>
           </p>
-        </div>
-        <div style={{ width: "48%", background: "linear-gradient(135deg, #EDE0D0 0%, #D9C4A8 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", position: "relative", overflow: "hidden" }}>
-          <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-            <div style={{ width: "220px", height: "220px", background: "rgba(255,255,255,0.3)", borderRadius: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "10px", border: "1px solid rgba(255,255,255,0.4)" }}>
-              <div style={{ fontSize: "72px", lineHeight: 1 }}>🧑‍💻</div>
-              <div style={{ display: "flex", gap: "6px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#B8862E" }} />
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(184,134,46,0.4)" }} />
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(184,134,46,0.2)" }} />
-              </div>
-            </div>
-          </div>
-          <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "140px", height: "140px", borderRadius: "50%", background: "rgba(255,255,255,0.2)" }} />
-          <div style={{ position: "absolute", bottom: "-30px", left: "-30px", width: "100px", height: "100px", borderRadius: "50%", background: "rgba(44,24,16,0.08)" }} />
         </div>
       </div>
     </div>

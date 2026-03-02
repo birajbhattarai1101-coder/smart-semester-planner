@@ -2,40 +2,40 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import CoveragePage from "./pages/CoveragePage";
-import AvailabilityPage from "./pages/AvailabilityPage";
-import TasksPage from "./pages/TasksPage";
-import SchedulePage from "./pages/SchedulePage";
-import "./styles/global.css";
+import ViewSchedulePage from "./pages/ViewSchedulePage";
 
-function AppLayout({ children }) {
+function PrivateRoute({ children }) {
   const { user } = useAuth();
-  if (!user) return children;
-  return <div className="app-layout"><Navbar />{children}</div>;
+  return user ? children : <Navigate to="/login" />;
 }
 
-function ProtectedRoute({ children }) {
+function AppRoutes() {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/" replace />;
+  return (
+    <>
+      {user && <Navbar />}
+      <Routes>
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <LandingPage />} />
+        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage />} />
+        <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <LoginPage initialMode="register" />} />
+        <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+        <Route path="/schedule" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+        <Route path="/view-schedule" element={<PrivateRoute><ViewSchedulePage /></PrivateRoute>} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </>
+  );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppLayout>
-          <Routes>
-            <Route path="/" element={<LoginPage />} />
-            <Route path="/dashboard"    element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            <Route path="/coverage"     element={<ProtectedRoute><CoveragePage /></ProtectedRoute>} />
-            <Route path="/availability" element={<ProtectedRoute><AvailabilityPage /></ProtectedRoute>} />
-            <Route path="/tasks"        element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
-            <Route path="/schedule"     element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
-          </Routes>
-        </AppLayout>
-      </BrowserRouter>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

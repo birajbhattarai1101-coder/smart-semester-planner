@@ -1,16 +1,16 @@
-﻿import React, { useState, useEffect, useContext } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { generateSchedule, notifyDeadline, notifyDaily, notifyWeekly } from "../api/planner";
 
 export default function ViewSchedulePage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [schedule, setSchedule]           = useState([]);
-  const [priorities, setPriorities]       = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [notifStatus, setNotifStatus]     = useState("");
-  const [notifLoading, setNotifLoading]   = useState("");
+  const [schedule, setSchedule]         = useState([]);
+  const [priorities, setPriorities]     = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [notifStatus, setNotifStatus]   = useState("");
+  const [notifLoading, setNotifLoading] = useState("");
 
   useEffect(() => { loadSchedule(); }, []);
 
