@@ -1,7 +1,7 @@
 ﻿import axios from "axios";
 
 const API = axios.create({
-  baseURL: "/api",
+  baseURL: "https://smart-planner-api-uww8.onrender.com/api",
   headers: { "Content-Type": "application/json" },
   timeout: 30000,
 });
