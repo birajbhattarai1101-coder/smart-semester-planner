@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import LandingPage from "./pages/LandingPage";
@@ -15,9 +15,11 @@ function PrivateRoute({ children }) {
 
 function AppRoutes() {
   const { user } = useAuth();
+  const location = useLocation();
+  const hideNav = !user || location.pathname === "/onboarding";
   return (
     <>
-      {user && <Navbar />}
+      {!hideNav && <Navbar />}
       <Routes>
         <Route path="/" element={user ? <Navigate to="/dashboard" /> : <LandingPage />} />
         <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage />} />
