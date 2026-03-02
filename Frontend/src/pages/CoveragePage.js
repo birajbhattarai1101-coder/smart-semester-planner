@@ -45,9 +45,7 @@ export default function CoveragePage() {
               <div style={{ position:"relative", height:"6px", background:"var(--cream-dark)", borderRadius:"3px", overflow:"hidden", marginBottom:"8px" }}>
                 <div style={{ position:"absolute", left:0, top:0, height:"100%", width:`${coverage[subject]}%`, background:getColor(coverage[subject]), borderRadius:"3px", transition:"width 100ms" }} />
               </div>
-              <input type="range" min="0" max="100" step="5" value={coverage[subject]}
-                onChange={e => setCoverage(p => ({ ...p, [subject]: Number(e.target.value) }))}
-                style={{ width:"100%", accentColor:"var(--caramel)", cursor:"pointer" }} />
+              <input type="number" min="0" max="100" value={coverage[subject]} onChange={e => setCoverage(p => ({ ...p, [subject]: Math.min(100, Math.max(0, Number(e.target.value))) }))} style={{ width:"70px", textAlign:"center", padding:"8px", border:"1px solid var(--border)", borderRadius:"8px", fontSize:"15px", fontWeight:700, color:"var(--espresso)", fontFamily:"var(--font-body)", outline:"none" }} />
             </div>
             <div style={{ width:"52px", textAlign:"center", background:"var(--cream-dark)", borderRadius:"8px", padding:"6px 8px", fontWeight:800, fontSize:"15px", color:"var(--espresso)", flexShrink:0 }}>{coverage[subject]}%</div>
           </div>
@@ -60,3 +58,4 @@ export default function CoveragePage() {
     </div>
   );
 }
+
