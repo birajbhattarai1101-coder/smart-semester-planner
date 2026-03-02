@@ -8,60 +8,65 @@ const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sun
 export default function AvailabilityPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const today = new Date();
-  const todayIdx = today.getDay() === 0 ? 6 : today.getDay() - 1;
-  const [hours, setHours] = useState(Array(7).fill(4));
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [hours, setHours]   = useState(Object.fromEntries(DAYS.map((d,i) => [d, i<5?4:2])));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved]   = useState(false);
+  const [error, setError]   = useState("");
+  const total = Object.values(hours).reduce((s,v) => s+v, 0);
 
   const handleSave = async () => {
-    setLoading(true);
+    setSaving(true); setError("");
     try {
-      const availability = hours.map((h, i) => ({ day_label: "Day" + (i + 1), available_hours: h }));
-      await saveAvailability(user.username, availability);
-      setSuccess(true);
-      setTimeout(() => navigate("/tasks"), 1200);
-    } catch { setError("Failed to save."); }
-    finally { setLoading(false); }
+      await saveAvailability(user.username, DAYS.map((d,i) => ({ day_label:`Day${i+1}`, available_hours:hours[d] })));
+      setSaved(true); setTimeout(() => navigate("/tasks"), 800);
+    } catch { setError("Failed to save availability."); }
+    finally { setSaving(false); }
   };
-
-  const totalHours = hours.reduce((a, b) => a + b, 0);
 
   return (
     <div className="main-content">
-      <div className="page-header animate-fadeUp">
-        <div className="page-header-eyebrow">Step 02 of 04</div>
-        <h1>Weekly <em>Availability</em></h1>
-        <p>How many hours can you study each day? Set 0 for days you are unavailable.</p>
+      <div className="page-header fade-up" style={{ opacity:0 }}>
+        <p style={{ fontSize:"11px", fontWeight:700, textTransform:"uppercase", letterSpacing:"2px", color:"var(--caramel)", marginBottom:"8px" }}>Step 02 of 04</p>
+        <h1>Study <em>Availability</em></h1>
+        <p>Set how many hours you can dedicate to studying each day this week.</p>
       </div>
-      {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">Availability saved! Redirecting...</div>}
-      <div className="card animate-fadeIn delay-1" style={{ padding: "1rem 1.5rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--cream-dark)" }}>
-        <span style={{ fontSize: "0.8rem", color: "var(--brown)" }}>Total study hours this week</span>
-        <span style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", fontWeight: 300, color: "var(--brown-deep)" }}>{totalHours} <span style={{ fontSize: "0.9rem", color: "var(--beige-dark)" }}>hrs</span></span>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-        {DAYS.map((day, i) => (
-          <div key={day} className={"card animate-fadeUp delay-" + Math.min(i + 2, 5)} style={{ padding: "1rem 1.5rem", background: i === todayIdx ? "var(--cream-dark)" : "var(--white-warm)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-              <div style={{ minWidth: "120px" }}>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: "1rem", fontWeight: 500, color: "var(--brown-deep)" }}>
-                  {day}
-                  {i === todayIdx && <span style={{ marginLeft: "0.5rem", fontSize: "0.65rem", background: "var(--gold)", color: "var(--ink)", padding: "0.1rem 0.4rem", borderRadius: "1px", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "var(--font-body)" }}>Today</span>}
-                </div>
+      {error && <div className="alert alert-error"><i className="fa-solid fa-circle-exclamation" /> {error}</div>}
+      {saved && <div className="alert alert-success"><i className="fa-solid fa-circle-check" /> Saved! Redirecting...</div>}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 260px", gap:"20px", alignItems:"start" }}>
+        <div className="card fade-up delay-1" style={{ opacity:0 }}>
+          <h2 className="section-title" style={{ marginBottom:"4px" }}>Weekly Hours</h2>
+          <p className="section-subtitle">Enter available study hours per day (0-12)</p>
+          {DAYS.map((day, i) => (
+            <div key={day} style={{ display:"flex", alignItems:"center", gap:"16px", padding:"14px 0", borderBottom:i<DAYS.length-1?"1px solid var(--cream-dark)":"none" }}>
+              <div style={{ width:"100px", flexShrink:0 }}>
+                <p style={{ fontSize:"13px", fontWeight:700, color:"var(--espresso)" }}>{day}</p>
               </div>
-              <input type="range" className="range-input" min="0" max="12" step="0.5" value={hours[i]} onChange={e => { const n = [...hours]; n[i] = Number(e.target.value); setHours(n); }} />
-              <div style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 300, color: hours[i] === 0 ? "var(--beige-mid)" : "var(--brown)", minWidth: "60px", textAlign: "right" }}>
-                {hours[i] === 0 ? "Off" : hours[i] + "h"}
+              <div style={{ flex:1, display:"flex", alignItems:"center", gap:"10px" }}>
+                <div style={{ flex:1, height:"5px", background:"var(--cream-dark)", borderRadius:"3px", overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${(hours[day]/12)*100}%`, background:"var(--caramel)", borderRadius:"3px", transition:"width 100ms" }} />
+                </div>
+                <input type="number" min="0" max="12" value={hours[day]}
+                  onChange={e => setHours(p => ({ ...p, [day]:Math.min(12,Math.max(0,Number(e.target.value))) }))}
+                  style={{ width:"55px", textAlign:"center", padding:"7px", border:"1px solid var(--border)", borderRadius:"8px", fontSize:"14px", fontWeight:700, color:"var(--espresso)", fontFamily:"var(--font-body)", outline:"none" }} />
+                <span style={{ fontSize:"12px", color:"var(--coffee)", width:"20px" }}>hr</span>
               </div>
             </div>
+          ))}
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:"16px" }}>
+          <div className="card fade-up delay-2" style={{ opacity:0, textAlign:"center" }}>
+            <p style={{ fontSize:"11px", fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:"var(--coffee)", marginBottom:"8px" }}>Total Weekly Hours</p>
+            <p style={{ fontFamily:"var(--font-display)", fontSize:"48px", fontWeight:700, color:"var(--espresso)", lineHeight:1 }}>{total}</p>
+            <p style={{ fontSize:"13px", color:"var(--coffee)", marginTop:"4px" }}>hours planned</p>
           </div>
-        ))}
+          <div className="card fade-up delay-3" style={{ opacity:0 }}>
+            <p style={{ fontSize:"12px", color:"var(--coffee)", lineHeight:1.7 }}><strong style={{ color:"var(--espresso)" }}>Tip:</strong> Aim for 4-6 hours on weekdays and 2-3 on weekends for balanced study sessions.</p>
+          </div>
+        </div>
       </div>
-      <div style={{ display: "flex", gap: "1rem", marginTop: "2rem", justifyContent: "flex-end" }}>
-        <button className="btn btn-secondary" onClick={() => navigate("/coverage")}>← Back</button>
-        <button className="btn btn-primary btn-lg" onClick={handleSave} disabled={loading || success}>{loading ? "Saving..." : "Save & Continue →"}</button>
+      <div style={{ display:"flex", justifyContent:"flex-end", gap:"12px", marginTop:"20px" }}>
+        <button className="btn btn-outline" onClick={() => navigate("/coverage")}><i className="fa-solid fa-arrow-left" /> Back</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : <><i className="fa-solid fa-arrow-right" /> Save & Continue</>}</button>
       </div>
     </div>
   );

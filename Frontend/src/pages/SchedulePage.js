@@ -6,200 +6,149 @@ import { useAuth } from "../context/AuthContext";
 export default function SchedulePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [schedule, setSchedule]       = useState(null);
-  const [priorities, setPriorities]   = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState("");
-  const [offset, setOffset]           = useState(0);
-  const [notifStatus, setNotifStatus] = useState("");
+  const [schedule, setSchedule]         = useState(null);
+  const [priorities, setPriorities]     = useState([]);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState("");
+  const [notifStatus, setNotifStatus]   = useState("");
   const [notifLoading, setNotifLoading] = useState("");
 
   const handleGenerate = async () => {
     setLoading(true); setError("");
-    try {
-      const res  = await generateSchedule(user.username, offset);
-      const data = res.data.data;
-      setSchedule(data.schedule || []);
-      setPriorities(data.subject_priorities || []);
-    } catch (err) { setError(err.response?.data?.message || "Failed to generate schedule."); }
+    try { const res = await generateSchedule(user.username,0); const data=res.data.data; setSchedule(data.schedule||[]); setPriorities(data.subject_priorities||[]); }
+    catch (err) { setError(err.response?.data?.message||"Failed to generate schedule."); }
     finally { setLoading(false); }
   };
 
-  const sendNotification = async (type) => {
+  const sendNotif = async (type) => {
     setNotifLoading(type); setNotifStatus("");
     try {
-      const fn = type === "deadline" ? notifyDeadline : type === "daily" ? notifyDaily : notifyWeekly;
-      const res = await fn(user.username);
-      const d   = res.data.data;
-      if (d.sent) setNotifStatus("success:" + type);
-      else setNotifStatus("fail:" + (d.reason || d.error || "Unknown error"));
-    } catch (err) {
-      setNotifStatus("fail:" + (err.response?.data?.message || "Failed to send."));
-    } finally { setNotifLoading(""); }
+      const fn = type==="deadline"?notifyDeadline:type==="daily"?notifyDaily:notifyWeekly;
+      const res = await fn(user.username); const d=res.data.data;
+      setNotifStatus(d.sent?"success":"fail:"+(d.reason||d.error||"Failed"));
+    } catch (err) { setNotifStatus("fail:"+(err.response?.data?.message||"Failed")); }
+    finally { setNotifLoading(""); }
   };
 
-  const grouped = schedule ? schedule.reduce((acc, row) => { if (!acc[row.day]) acc[row.day] = []; acc[row.day].push(row); return acc; }, {}) : {};
-  const getBadge   = (t) => "badge badge-" + (t === "Assignment" ? "assignment" : t === "Lab" ? "lab" : "study");
-  const getPriClass = (l) => l === "HIGH" || l === "CRITICAL" ? "priority-high" : l === "MEDIUM" ? "priority-medium" : "priority-low";
-  const total = schedule ? schedule.reduce((s, r) => s + r.allocated_hours, 0).toFixed(1) : 0;
+  const grouped = schedule ? schedule.reduce((acc,row) => { (acc[row.day]=acc[row.day]||[]).push(row); return acc; }, {}) : {};
+  const total = schedule ? schedule.reduce((s,r)=>s+r.allocated_hours,0).toFixed(1) : 0;
+  const getPriColor = l => l==="HIGH"||l==="CRITICAL"?"var(--error-red)":l==="MEDIUM"?"rgb(180,120,20)":"rgb(34,139,34)";
+  const getBadgeStyle = type => type==="Assignment"?{background:"rgb(235,245,235)",color:"rgb(50,100,50)",border:"1px solid rgb(180,220,180)"}:type==="Lab"?{background:"rgb(235,235,250)",color:"rgb(50,50,130)",border:"1px solid rgb(180,180,220)"}:{background:"rgb(250,243,235)",color:"var(--coffee)",border:"1px solid rgba(192,133,82,0.3)"};
 
   return (
     <div className="main-content">
-      <div className="page-header animate-fadeUp">
-        <div className="page-header-eyebrow">Step 04 of 04</div>
-        <h1>Your <em>Schedule</em></h1>
-        <p>AI-generated 7-day study plan based on your coverage, availability, and task priorities.</p>
+      <div className="page-header fade-up" style={{ opacity:0 }}>
+        <p style={{ fontSize:"11px", fontWeight:700, textTransform:"uppercase", letterSpacing:"2px", color:"var(--caramel)", marginBottom:"8px" }}>Step 04 of 04</p>
+        <h1>Study <em>Schedule</em></h1>
+        <p>Generate your AI-powered 7-day study plan based on your coverage, availability, and tasks.</p>
       </div>
-
-      {/* Generate controls */}
-      <div className="card animate-fadeUp delay-1" style={{ padding: "1.2rem 1.8rem", marginBottom: "2rem", display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap" }}>
-        <div className="form-group" style={{ margin: 0, flex: 1, minWidth: "200px" }}>
-          <label className="form-label">Start offset (days from today)</label>
-          <div className="range-group">
-            <input type="range" className="range-input" min="0" max="6" step="1" value={offset} onChange={e => setOffset(Number(e.target.value))} />
-            <div className="range-value">{offset === 0 ? "Today" : "+" + offset + "d"}</div>
-          </div>
-        </div>
-        <button className="btn btn-gold btn-lg" onClick={handleGenerate} disabled={loading} style={{ flexShrink: 0 }}>
-          {loading ? "Generating..." : "✨ Generate Schedule"}
-        </button>
-      </div>
-
-      {error && <div className="alert alert-error">{error}</div>}
-      {loading && (
-        <div className="loading-overlay">
-          <div className="spinner" style={{ width: 40, height: 40 }} />
-          <div className="loading-text">Consulting the AI engines...</div>
+      {!schedule && !loading && (
+        <div className="card fade-up delay-1" style={{ opacity:0, textAlign:"center", padding:"60px 40px" }}>
+          <div style={{ width:"70px", height:"70px", background:"rgb(250,243,235)", borderRadius:"20px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"30px", margin:"0 auto 20px" }}>🤖</div>
+          <h2 style={{ fontFamily:"var(--font-display)", fontSize:"24px", color:"var(--espresso)", marginBottom:"10px" }}>Ready to Generate</h2>
+          <p style={{ color:"var(--coffee)", fontSize:"14px", marginBottom:"28px", opacity:0.8 }}>Our AI will analyze your data and create an optimized schedule.</p>
+          <button className="btn btn-primary" onClick={handleGenerate} style={{ fontSize:"15px", padding:"14px 32px" }}>
+            <i className="fa-solid fa-bolt" /> Generate Study Schedule
+          </button>
         </div>
       )}
-
+      {loading && (
+        <div className="processing-overlay">
+          <div className="processing-box"><div className="spinner" /><h3>Generating Schedule</h3><p>Consulting the AI engine...</p></div>
+        </div>
+      )}
+      {error && <div className="alert alert-error"><i className="fa-solid fa-circle-exclamation" /> {error}</div>}
       {schedule && !loading && (
         <>
-          {/* Subject priorities */}
-          <div className="animate-fadeUp">
-            <div style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 400, color: "var(--brown-deep)", marginBottom: "1rem" }}>Subject Priority Analysis</div>
-            <div className="priority-grid">
-              {priorities.map((p, i) => (
-                <div key={p.subject} className={"priority-card animate-fadeUp delay-" + (i + 1)}>
-                  <div className="priority-card-subject">{p.subject}</div>
-                  <div className="priority-card-score">{p.priority_score.toFixed(1)}</div>
-                  <div className={"priority-card-label " + getPriClass(p.priority_label)}>{p.priority_label}</div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--beige-mid)", marginTop: "0.3rem" }}>{p.coverage_percentage}% covered</div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"16px", marginBottom:"24px" }}>
+            {[
+              {label:"Total Hours",  value:total+"h",  icon:"fa-clock"},
+              {label:"Assignments",  value:schedule.filter(r=>r.task_type==="Assignment").reduce((s,r)=>s+r.allocated_hours,0).toFixed(1)+"h", icon:"fa-pen-to-square"},
+              {label:"Labs",         value:schedule.filter(r=>r.task_type==="Lab").reduce((s,r)=>s+r.allocated_hours,0).toFixed(1)+"h", icon:"fa-file-lines"},
+              {label:"Study",        value:schedule.filter(r=>r.task_type==="Study").reduce((s,r)=>s+r.allocated_hours,0).toFixed(1)+"h", icon:"fa-book-open"},
+            ].map((stat,i) => (
+              <div key={stat.label} className="card fade-up" style={{ opacity:0, animationDelay:`${i*0.05}s`, textAlign:"center", padding:"20px" }}>
+                <i className={`fa-solid ${stat.icon}`} style={{ color:"var(--caramel)", fontSize:"18px", marginBottom:"8px" }} />
+                <p style={{ fontFamily:"var(--font-display)", fontSize:"28px", fontWeight:700, color:"var(--espresso)", margin:"4px 0" }}>{stat.value}</p>
+                <p style={{ fontSize:"11px", fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:"var(--coffee)", opacity:0.7 }}>{stat.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="card fade-up delay-2" style={{ opacity:0, marginBottom:"24px" }}>
+            <h2 className="section-title" style={{ marginBottom:"4px" }}>Subject Priority Analysis</h2>
+            <p className="section-subtitle">AI-generated priority based on historical failure rates and your coverage</p>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"12px" }}>
+              {priorities.map(p => (
+                <div key={p.subject} style={{ background:"var(--cream)", borderRadius:"12px", padding:"16px", border:"1px solid var(--border)" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"8px" }}>
+                    <h4 style={{ fontSize:"14px", fontWeight:700, color:"var(--espresso)" }}>{p.subject}</h4>
+                    <span style={{ fontSize:"11px", fontWeight:800, color:getPriColor(p.priority_label) }}>{p.priority_label}</span>
+                  </div>
+                  <div style={{ height:"4px", background:"var(--border)", borderRadius:"2px", overflow:"hidden", marginBottom:"6px" }}>
+                    <div style={{ height:"100%", width:`${Math.min(p.priority_score,100)}%`, background:getPriColor(p.priority_label), borderRadius:"2px" }} />
+                  </div>
+                  <p style={{ fontSize:"11px", color:"var(--coffee)", opacity:0.8 }}>{p.coverage_percentage}% covered · Score: {p.priority_score.toFixed(1)}</p>
                 </div>
               ))}
             </div>
           </div>
-
-          <div className="divider" />
-
-          {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
-            {[
-              { label: "Total Hours",  value: total + "h" },
-              { label: "Assignments",  value: schedule.filter(r => r.task_type === "Assignment").reduce((s,r) => s + r.allocated_hours, 0).toFixed(1) + "h" },
-              { label: "Labs",         value: schedule.filter(r => r.task_type === "Lab").reduce((s,r) => s + r.allocated_hours, 0).toFixed(1) + "h" },
-              { label: "Study",        value: schedule.filter(r => r.task_type === "Study").reduce((s,r) => s + r.allocated_hours, 0).toFixed(1) + "h" },
-            ].map((stat, i) => (
-              <div key={stat.label} className={"card animate-fadeUp delay-" + (i + 1)} style={{ padding: "1rem", textAlign: "center" }}>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: "2rem", fontWeight: 300, color: "var(--brown-deep)" }}>{stat.value}</div>
-                <div style={{ fontSize: "0.72rem", color: "var(--beige-mid)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{stat.label}</div>
+          <div className="card fade-up delay-3" style={{ opacity:0, marginBottom:"24px", background:"var(--espresso)", border:"none" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"16px" }}>
+              <div>
+                <h3 style={{ color:"white", fontSize:"16px", marginBottom:"4px" }}><i className="fa-solid fa-envelope" style={{ color:"var(--caramel)", marginRight:"8px" }} />Email Notifications</h3>
+                <p style={{ color:"rgba(255,255,255,0.6)", fontSize:"13px" }}>Send your schedule to your registered email</p>
               </div>
-            ))}
-          </div>
-
-          {/* Email Notifications panel */}
-          <div className="card animate-fadeUp" style={{ marginBottom: "2rem", background: "var(--cream-dark)", border: "1px solid var(--beige)" }}>
-            <div style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", fontWeight: 400, color: "var(--brown-deep)", marginBottom: "0.4rem" }}>
-              ✉️ &nbsp;Email Notifications
+              <div style={{ display:"flex", gap:"10px", flexWrap:"wrap" }}>
+                {[{type:"deadline",label:"Deadline Alert",icon:"fa-triangle-exclamation"},{type:"daily",label:"Today Plan",icon:"fa-calendar-day"},{type:"weekly",label:"Weekly Summary",icon:"fa-calendar-week"}].map(btn => (
+                  <button key={btn.type} onClick={() => sendNotif(btn.type)} disabled={notifLoading===btn.type}
+                    style={{ background:"rgba(192,133,82,0.2)", color:"var(--caramel)", border:"1px solid rgba(192,133,82,0.4)", padding:"8px 16px", borderRadius:"8px", fontSize:"12px", fontWeight:700, cursor:"pointer", fontFamily:"var(--font-body)" }}>
+                    <i className={`fa-solid ${btn.icon}`} style={{ marginRight:"6px" }} />{notifLoading===btn.type?"Sending...":btn.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <p style={{ fontSize: "0.82rem", color: "var(--beige-dark)", marginBottom: "1.2rem", lineHeight: 1.7 }}>
-              Send your schedule, deadline alerts, or daily plan directly to your registered email.
-            </p>
-
-            {notifStatus.startsWith("success") && (
-              <div className="alert alert-success" style={{ marginBottom: "1rem" }}>
-                ✓ Email sent successfully! Check your inbox.
-              </div>
-            )}
-            {notifStatus.startsWith("fail") && (
-              <div className="alert alert-error" style={{ marginBottom: "1rem" }}>
-                ✕ {notifStatus.replace("fail:", "")}
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-              <button
-                className="btn btn-primary"
-                onClick={() => sendNotification("deadline")}
-                disabled={notifLoading === "deadline"}
-                style={{ flex: 1, minWidth: "160px" }}
-              >
-                {notifLoading === "deadline" ? "Sending..." : "⚠️ Deadline Alert"}
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => sendNotification("daily")}
-                disabled={notifLoading === "daily"}
-                style={{ flex: 1, minWidth: "160px" }}
-              >
-                {notifLoading === "daily" ? "Sending..." : "📅 Today's Plan"}
-              </button>
-              <button
-                className="btn btn-gold"
-                onClick={() => sendNotification("weekly")}
-                disabled={notifLoading === "weekly"}
-                style={{ flex: 1, minWidth: "160px" }}
-              >
-                {notifLoading === "weekly" ? "Sending..." : "📊 Weekly Summary"}
-              </button>
-            </div>
-            <p style={{ fontSize: "0.72rem", color: "var(--beige-mid)", marginTop: "1rem" }}>
-              ✦ Emails are sent to the address registered with your account
-            </p>
+            {notifStatus==="success" && <div style={{ marginTop:"12px", color:"rgb(150,220,150)", fontSize:"13px", fontWeight:600 }}><i className="fa-solid fa-circle-check" style={{ marginRight:"6px" }} />Email sent!</div>}
+            {notifStatus.startsWith("fail") && <div style={{ marginTop:"12px", color:"rgb(239,150,150)", fontSize:"13px", fontWeight:600 }}><i className="fa-solid fa-circle-xmark" style={{ marginRight:"6px" }} />{notifStatus.replace("fail:","")}</div>}
           </div>
-
-          {/* Day-by-day schedule */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            {Object.entries(grouped).map(([day, rows], di) => {
-              const dayTotal = rows.reduce((s, r) => s + r.allocated_hours, 0).toFixed(1);
+          <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+            {Object.entries(grouped).map(([day,rows]) => {
+              const dayTotal = rows.reduce((s,r)=>s+r.allocated_hours,0).toFixed(1);
               return (
-                <div key={day} className={"animate-fadeUp delay-" + Math.min(di + 1, 5)}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.6rem" }}>
-                    <div style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", fontWeight: 500, color: "var(--brown-deep)" }}>{day}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--beige-mid)" }}>{dayTotal} hrs total</div>
+                <div key={day} className="card fade-up" style={{ opacity:0, padding:0, overflow:"hidden" }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 24px", background:"var(--espresso)" }}>
+                    <h3 style={{ color:"white", fontSize:"15px", fontWeight:700 }}>{day}</h3>
+                    <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
+                      <div style={{ height:"4px", width:"100px", background:"rgba(255,255,255,0.2)", borderRadius:"2px", overflow:"hidden" }}>
+                        <div style={{ height:"100%", width:`${Math.min((dayTotal/8)*100,100)}%`, background:"var(--caramel)", borderRadius:"2px" }} />
+                      </div>
+                      <span style={{ color:"var(--caramel)", fontSize:"13px", fontWeight:700 }}>{dayTotal}h</span>
+                    </div>
                   </div>
-                  <div style={{ height: "2px", background: "var(--beige)", borderRadius: "1px", marginBottom: "0.8rem", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: Math.min((dayTotal / 8) * 100, 100) + "%", background: "linear-gradient(to right, var(--beige-mid), var(--gold))", borderRadius: "1px" }} />
-                  </div>
-                  <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-                    <table className="schedule-table">
-                      <thead><tr><th>Task</th><th>Type</th><th>Subject</th><th style={{ textAlign: "right" }}>Hours</th><th>Deadline</th><th>Priority</th></tr></thead>
-                      <tbody>
-                        {rows.map((row, ri) => (
-                          <tr key={ri}>
-                            <td style={{ color: "var(--ink)", fontWeight: 400 }}>{row.task_name}</td>
-                            <td><span className={getBadge(row.task_type)}>{row.task_type}</span></td>
-                            <td>{row.subject}</td>
-                            <td style={{ textAlign: "right", fontFamily: "var(--font-display)", fontSize: "1rem", color: "var(--brown)" }}>{row.allocated_hours}</td>
-                            <td style={{ color: "var(--beige-dark)" }}>{row.deadline}</td>
-                            <td><span className={getPriClass(row.urgency_label)}>{row.urgency_label}</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <table className="data-table">
+                    <thead><tr><th>Task</th><th>Type</th><th>Subject</th><th style={{ textAlign:"right" }}>Hours</th><th>Deadline</th><th>Priority</th></tr></thead>
+                    <tbody>
+                      {rows.map((row,ri) => (
+                        <tr key={ri}>
+                          <td style={{ fontWeight:600, color:"var(--espresso)" }}>{row.task_name}</td>
+                          <td><span style={{ ...getBadgeStyle(row.task_type), display:"inline-block", padding:"2px 8px", borderRadius:"4px", fontSize:"11px", fontWeight:700 }}>{row.task_type}</span></td>
+                          <td>{row.subject}</td>
+                          <td style={{ textAlign:"right", fontWeight:700, color:"var(--caramel)" }}>{row.allocated_hours}h</td>
+                          <td>{row.deadline||"—"}</td>
+                          <td style={{ color:getPriColor(row.urgency_label), fontWeight:700, fontSize:"12px" }}>{row.urgency_label}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               );
             })}
           </div>
-          <div className="ornament" style={{ marginTop: "3rem" }}>— ✦ —</div>
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:"24px" }}>
+            <button className="btn btn-outline" onClick={() => navigate("/tasks")}><i className="fa-solid fa-arrow-left" /> Back to Tasks</button>
+            <button className="btn btn-caramel" onClick={handleGenerate}><i className="fa-solid fa-rotate" /> Regenerate</button>
+          </div>
         </>
       )}
-
-      <div style={{ display: "flex", gap: "1rem", marginTop: "2rem", justifyContent: "space-between" }}>
-        <button className="btn btn-secondary" onClick={() => navigate("/tasks")}>← Back to Tasks</button>
-        <button className="btn btn-secondary" onClick={() => navigate("/dashboard")}>Dashboard</button>
-      </div>
     </div>
   );
 }
