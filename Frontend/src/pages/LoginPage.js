@@ -22,7 +22,7 @@ export default function LoginPage({ initialMode = "login" }) {
       if (mode === "register") await registerUser(username, password, email || undefined);
       await loginUser(username, password);
       login(username);
-      navigate("/dashboard");
+      mode === 'register' ? navigate('/onboarding') : navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong.");
     } finally { setLoading(false); }
@@ -111,3 +111,4 @@ export default function LoginPage({ initialMode = "login" }) {
     </div>
   );
 }
+
