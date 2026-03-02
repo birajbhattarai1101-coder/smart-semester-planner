@@ -1,0 +1,5 @@
+﻿flask
+experta@ git+https://github.com/nilp0inter/experta.git
+pandas
+sqlalchemy
+python-dotenv
