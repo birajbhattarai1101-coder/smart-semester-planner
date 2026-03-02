@@ -19,10 +19,15 @@ export default function LoginPage({ initialMode = "login" }) {
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      if (mode === "register") await registerUser(username, password, email || undefined);
+      const isRegister = mode === "register";
+      if (isRegister) await registerUser(username, password, email || undefined);
       await loginUser(username, password);
       login(username);
-      mode === 'register' ? navigate('/onboarding') : navigate('/dashboard');
+      if (isRegister) {
+        navigate("/onboarding");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong.");
     } finally { setLoading(false); }
@@ -111,4 +116,5 @@ export default function LoginPage({ initialMode = "login" }) {
     </div>
   );
 }
+
 
