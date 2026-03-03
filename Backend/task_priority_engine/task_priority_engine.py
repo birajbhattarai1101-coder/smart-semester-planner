@@ -53,10 +53,10 @@ def _load_tasks(csv_path, task_type):
              "deadline_days": int(r["deadline_days_from_today"])} for _, r in df.iterrows()]
 
 def run_task_priority_engine(assignment_csv=None, lab_csv=None, extra_tasks=None):
-    all_tasks = _load_tasks(assignment_csv or DEFAULT_ASSIGNMENT_CSV, "Assignment")
-    all_tasks += _load_tasks(lab_csv or DEFAULT_LAB_CSV, "Lab")
-    if extra_tasks:
-        all_tasks.extend(extra_tasks)
+    all_tasks = list(extra_tasks) if extra_tasks else []
+
+
+
     engine = TaskPriorityEngine()
     engine.reset()
     for t in all_tasks:

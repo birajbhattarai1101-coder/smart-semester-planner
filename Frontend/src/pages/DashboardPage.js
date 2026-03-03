@@ -16,7 +16,37 @@ const DIFFS = ["Easy","Medium","Hard"];
 const HOURS_MAP = { Assignment:{ Easy:1.5, Medium:2, Hard:3 }, Lab:{ Easy:0.75, Medium:1.5, Hard:2 } };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loginStatus, setLoginStatus } = useAuth();
+  const [showReturningModal, setShowReturningModal] = useState(false);
+  const [returningStep, setReturningStep] = useState(1);
+
+  useEffect(() => {
+    if (loginStatus === "returning") {
+      setShowReturningModal(true);
+      setReturningStep(1);
+    }
+  }, [loginStatus]);
+
+  const handleReturningHoursYes = () => {
+    setShowReturningModal(false);
+    setLoginStatus(null);
+    setShowHoursModal(true);
+  };
+
+  const handleReturningHoursNo = () => {
+    setReturningStep(2);
+  };
+
+  const handleReturningTasksYes = () => {
+    setShowReturningModal(false);
+    setLoginStatus(null);
+  };
+
+  const handleReturningTasksNo = () => {
+    setShowReturningModal(false);
+    setLoginStatus(null);
+    navigate("/view-schedule");
+  };
   const navigate = useNavigate();
   const [coverage, setCoverage]               = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, 0])));
   const [lastSchedule, setLastSchedule] = useState(null);
@@ -59,13 +89,14 @@ export default function DashboardPage() {
   };
 
   const handleGenerate = async () => {
+    const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key);
+    if (selectedKeys.length === 0) { alert("Please select at least one subject."); return; }
     setGenerating(true); setError("");
     try {
-      await saveCoverage(user.username, coverage);
-      const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key);
-        if (selectedKeys.length === 0) { alert("Please select at least one subject."); setLoading(false); return; }
-        await generateSchedule(user.username, 0, selectedKeys, 0);
-      setLastSchedule(res.data.data); setShowSuccessModal("schedule");
+      await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k]])));
+      const res = await generateSchedule(user.username, 0, selectedKeys);
+      setLastSchedule(res.data.data);
+      setShowSuccessModal("schedule");
     } catch { setError("Failed to generate. Please set your availability first."); }
     finally { setGenerating(false); }
   };
@@ -152,6 +183,34 @@ export default function DashboardPage() {
           {generating ? "Generating..." : "Generate Study Schedule"}
         </button>
       </div>
+
+      {showReturningModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }}>
+          <div style={{ background: "white", borderRadius: "20px", padding: "40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)", textAlign: "center" }}>
+            {returningStep === 1 ? (
+              <>
+                <div style={{ fontSize: "40px", marginBottom: "16px" }}>⏰</div>
+                <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>Welcome back!</h2>
+                <p style={{ fontSize: "14px", color: "#8C7B70", marginBottom: "32px" }}>Any changes to your available hours this week?</p>
+                <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                  <button onClick={handleReturningHoursYes} style={{ background: "#2C1810", color: "white", border: "none", padding: "12px 32px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Yes, Edit Hours</button>
+                  <button onClick={handleReturningHoursNo} style={{ background: "#F5F0EA", color: "#2C1810", border: "none", padding: "12px 32px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>No Changes</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: "40px", marginBottom: "16px" }}>📋</div>
+                <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>Any task modifications?</h2>
+                <p style={{ fontSize: "14px", color: "#8C7B70", marginBottom: "32px" }}>Do you want to add or edit assignments, labs or subjects?</p>
+                <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                  <button onClick={handleReturningTasksYes} style={{ background: "#2C1810", color: "white", border: "none", padding: "12px 32px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Yes, Edit Tasks</button>
+                  <button onClick={handleReturningTasksNo} style={{ background: "#F5F0EA", color: "#2C1810", border: "none", padding: "12px 32px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>No, View Schedule</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {showHoursModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowHoursModal(false)}>

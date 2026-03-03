@@ -1,11 +1,12 @@
 ﻿import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://smart-planner-backend.onrender.com/api",
+  baseURL: process.env.REACT_APP_API_URL || "https://smart-planner-backend.onrender.com/api",
   headers: { "Content-Type": "application/json" },
   timeout: 30000,
 });
 
+export const loginCheck = (user_id) => API.post("/login-check", { user_id });
 export const registerUser  = (username, password, email) =>
   API.post("/register", { username, password, ...(email ? { email } : {}) });
 

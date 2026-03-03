@@ -1,6 +1,6 @@
 ﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser, loginUser } from "../api/planner";
+import { registerUser, loginUser, loginCheck } from "../api/planner";
 import { useAuth } from "../context/AuthContext";
 
 const ILLUSTRATION = "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80";
@@ -22,10 +22,13 @@ export default function LoginPage({ initialMode = "login" }) {
       const isRegister = mode === "register";
       if (isRegister) await registerUser(username, password, email || undefined);
       await loginUser(username, password);
-      login(username);
       if (isRegister) {
+        login(username, "new_week");
         navigate("/onboarding");
       } else {
+        const checkRes = await loginCheck(username);
+        const status = checkRes.data.data.login_status;
+        login(username, status);
         navigate("/dashboard");
       }
     } catch (err) {

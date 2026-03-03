@@ -23,6 +23,7 @@ from user_credentials_db import register_user, authenticate_user
 from user_coverage_db import upsert_coverage, get_coverage_for_user
 from user_availability_db import upsert_availability, get_availability_for_user, clear_availability
 from user_tasks_db import add_task, get_tasks_for_user, delete_task
+from user_session_db import check_and_update_session
 from notification_routes import notify_bp
 
 from flask_cors import CORS
@@ -39,6 +40,16 @@ def _require(body, *keys):
 @app.get("/api/health")
 def health():
     return _ok({"message":"Smart Semester Planner API running.","timestamp":str(datetime.datetime.utcnow())})
+
+@app.post("/api/login-check")
+def login_check():
+    try:
+        body = request.get_json(force=True) or {}
+        username = body.get("user_id", "")
+        if not username: return _err("user_id required")
+        status = check_and_update_session(username)
+        return _ok({"login_status": status})
+    except Exception as e: return _err(str(e))
 
 @app.post("/api/register")
 def register():
@@ -160,8 +171,17 @@ def generate_schedule():
                 days_left = max(0,(dl-today).days)
                 db_tasks.append({"task_name":t["task_name"],"task_type":t["task_type"],"difficulty":t["difficulty"],"hours_required":t["hours_required"],"deadline_days":days_left})
         combined = db_tasks + (body.get("extra_tasks") or [])
-        task_priorities = run_task_priority_engine(extra_tasks=combined if combined else None)
+        task_priorities = run_task_priority_engine(extra_tasks=combined if combined else [])
         schedule = run_scheduler(availability=availability,task_priorities=task_priorities,subject_priorities=subject_priorities,start_offset_days=int(body.get("start_offset_days",0)))
+        try:
+            from user_credentials_db import get_user_email
+            from email_notifier import send_deadline_alert
+            user_email = get_user_email(uid) if uid else None
+            if user_email:
+                urgent = [t for t in db_tasks if t.get("deadline_days") == 1]
+                if urgent:
+                    send_deadline_alert(user_email, uid, urgent)
+        except: pass
         return _ok({"schedule":schedule,"subject_priorities":subject_priorities,"task_priorities":task_priorities[:20]})
     except Exception as e:
         import traceback; traceback.print_exc()

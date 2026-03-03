@@ -1,4 +1,6 @@
 ﻿import urllib.request, urllib.error, json, os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 from datetime import date
 
 # Load from environment variables (set in .env or Render dashboard)
