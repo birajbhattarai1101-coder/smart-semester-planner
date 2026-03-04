@@ -1,58 +1,70 @@
 ﻿import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 
-export default function OnboardingPage() {
+export default function LandingPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+
+  const features = [
+    { icon: "fa-solid fa-calendar-days", title: "Schedule", desc: "Organize your week for better studying." },
+    { icon: "fa-solid fa-bookmark", title: "Subjects", desc: "All your subjects, sorted to make studying easier." },
+    { icon: "fa-solid fa-clock-rotate-left", title: "Reminders", desc: "Never miss assignments, exams, or deadlines." },
+    { icon: "fa-solid fa-list-check", title: "Tasks", desc: "Keep your semester on track by organizing tasks easily." },
+  ];
 
   return (
     <>
-      <style>{`html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }`}</style>
-      <div style={{ display: "flex", height: "100vh", width: "100vw", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <style>{`
+        html, body, #root { margin: 0; padding: 0; width: 100%; overflow-x: hidden; box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; }
+      `}</style>
 
-        {/* LEFT */}
-        <div style={{ flex: 1, background: "#FAF8F4", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 72px" }}>
-          <div style={{ marginBottom: "36px" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "11px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#2C1810" }}>
-              <span style={{ width: "8px", height: "8px", background: "#B8862E", borderRadius: "50%", display: "inline-block" }} />
-              SMART SEMESTER
-            </span>
+      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", minHeight: "100vh", display: "flex", flexDirection: "column", width: "100%" }}>
+
+        {/* NAV */}
+        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 48px", background: "white", borderBottom: "1px solid #EEE9E0", position: "sticky", top: 0, zIndex: 100, width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <i className="fa-solid fa-book-open-reader" style={{ fontSize: "22px", color: "#B8862E" }} />
+            <span style={{ fontSize: "24px", fontWeight: 900, color: "#2C1810", letterSpacing: "-0.5px" }}>Smart Semester Planner</span>
           </div>
-          <div style={{ marginBottom: "12px", fontSize: "12px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#B8862E" }}>
-            REGISTRATION COMPLETE
+          <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
+            <button onClick={() => navigate("/login")} style={{ background: "none", border: "none", fontSize: "15px", fontWeight: 500, color: "#2C1810", cursor: "pointer", fontFamily: "inherit" }}>Login</button>
+            <button onClick={() => navigate("/register")} style={{ background: "#2C1810", color: "white", border: "none", padding: "12px 28px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Join Now</button>
           </div>
-          <h1 style={{ fontSize: "clamp(48px, 5vw, 68px)", fontWeight: 900, color: "#2C1810", lineHeight: 1.05, marginBottom: "20px", letterSpacing: "-2px" }}>
-            Own every<br />study <span style={{ color: "#B8862E" }}>second.</span>
+        </nav>
+
+        {/* HERO */}
+        <section style={{ minHeight: "calc(100vh - 61px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 48px", textAlign: "center", background: "linear-gradient(180deg, #FFFFFF 0%, #EDE0CC 100%)", width: "100%" }}>
+          <h1 style={{ fontSize: "clamp(42px, 5vw, 66px)", fontWeight: 900, color: "#2C1810", lineHeight: 1.12, margin: "0 0 20px", letterSpacing: "-2px", maxWidth: "700px" }}>
+            Master Your <span style={{ color: "#B8862E" }}>Semester</span><br />With AI Precision.
           </h1>
-          <p style={{ fontSize: "15px", color: "#6B5A4E", lineHeight: 1.7, marginBottom: "40px", maxWidth: "380px" }}>
-            Welcome to a smarter way of learning. We've created a space where your goals meet your actual availability.
+          <p style={{ fontSize: "17px", color: "#6B5A4E", maxWidth: "560px", lineHeight: 1.7, margin: "0 0 36px" }}>
+            Stop guessing. Our AI analyzes your deadlines and study habits to build the perfect, stress-free academic schedule.
           </p>
-          <button onClick={() => navigate("/dashboard")} style={{ display: "inline-flex", alignItems: "center", gap: "12px", background: "#2C1810", color: "white", border: "none", padding: "16px 32px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", width: "fit-content" }}>
-            Get Started <span style={{ fontSize: "18px" }}>→</span>
+          <button onClick={() => navigate("/register")} style={{ background: "#2C1810", color: "white", border: "none", padding: "18px 48px", borderRadius: "10px", fontSize: "17px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            Start Planning — It's Free
           </button>
-        </div>
+        </section>
 
-        {/* RIGHT */}
-        <div style={{ width: "45%", background: "#2C1810", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 60px" }}>
-          {[
-            { phase: "PHASE 01", title: "Define Capacity", desc: "Tell us how many hours you can truly give to your studies each week.", active: true },
-            { phase: "PHASE 02", title: "Sync Syllabus", desc: "Upload your assignments and labs to populate your task engine.", active: false },
-            { phase: "PHASE 03", title: "Generate Schedule", desc: "Balance your day, boost your results.", active: false },
-          ].map((item, i) => (
-            <div key={i} style={{ display: "flex", gap: "20px", marginBottom: i < 2 ? "32px" : "0" }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ width: "14px", height: "14px", borderRadius: "50%", background: item.active ? "#B8862E" : "transparent", border: item.active ? "none" : "2px solid rgba(255,255,255,0.3)", flexShrink: 0, marginTop: "3px" }} />
-                {i < 2 && <div style={{ width: "1px", flex: 1, background: "rgba(255,255,255,0.15)", margin: "8px 0" }} />}
+        {/* FEATURES */}
+        <section style={{ padding: "80px 48px", background: "#FAF8F4", width: "100%", borderTop: "1px solid #DDD5C8" }}>
+          <h2 style={{ textAlign: "center", fontSize: "30px", fontWeight: 800, color: "#2C1810", marginBottom: "40px" }}>Why use a Smart Planner?</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", maxWidth: "820px", margin: "0 auto" }}>
+            {features.map(f => (
+              <div key={f.title} style={{ background: "white", borderRadius: "16px", padding: "28px 24px", border: "1px solid #EEE9E0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+                  <i className={f.icon} style={{ fontSize: "20px", color: "#B8862E" }} />
+                  <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#2C1810", margin: 0 }}>{f.title}</h3>
+                </div>
+                <p style={{ fontSize: "13px", color: "#6B5A4E", lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
               </div>
-              <div style={{ paddingBottom: i < 2 ? "28px" : "0" }}>
-                <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#B8862E", marginBottom: "6px" }}>{item.phase}</div>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: "white", marginBottom: "6px" }}>{item.title}</div>
-                <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>{item.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FOOTER */}
+        <footer style={{ background: "#2C1810", padding: "52px 0", textAlign: "center", width: "100%", display: "block" }}>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", margin: 0 }}>2026 Smart Semester Planner | Crafted for Academic Excellence</p>
+        </footer>
 
       </div>
     </>
