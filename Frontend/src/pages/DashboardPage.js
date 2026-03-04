@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, generateSchedule, saveSchedule } from "../api/planner";
+import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, getAvailability, generateSchedule, saveSchedule } from "../api/planner";
 
 const SUBJECTS = [
   { key: "AI", label: "Artificial Intelligence(AI)" },
@@ -11,7 +11,9 @@ const SUBJECTS = [
   { key: "Embedded", label: "Embedded System(ES)" },
   { key: "Economics", label: "Engineering Economics" },
 ];
-const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const ALL_DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const today = new Date();
+const DAYS = Array.from({length: 7}, (_, i) => ALL_DAYS[(today.getDay() + i) % 7]);
 const DIFFS = ["Easy","Medium","Hard"];
 const HOURS_MAP = { Assignment:{ Easy:1.5, Medium:2, Hard:3 }, Lab:{ Easy:0.75, Medium:1.5, Hard:2 } };
 
@@ -21,7 +23,7 @@ export default function DashboardPage() {
   const [returningStep, setReturningStep] = useState(1);
 
   useEffect(() => {
-    if (loginStatus === "new_week") { setShowHoursModal(true); setLoginStatus(null); } else if (loginStatus === "returning") {
+    if (loginStatus === "new_week") { handleOpenHoursModal(); setLoginStatus(null); } else if (loginStatus === "returning") {
       setShowReturningModal(true);
       setReturningStep(1);
     }
@@ -30,7 +32,7 @@ export default function DashboardPage() {
   const handleReturningHoursYes = () => {
     setShowReturningModal(false);
     setLoginStatus(null);
-    setShowHoursModal(true);
+    handleOpenHoursModal();
   };
 
   const handleReturningHoursNo = () => {
@@ -66,6 +68,17 @@ export default function DashboardPage() {
     try { const res = await getTasks(user.username); setTasks(res.data.data.tasks || []); } catch {}
   };
 
+  const handleOpenHoursModal = async () => {
+    try {
+      const res = await getAvailability(user.username);
+      const saved = res.data.data.availability || [];
+      if (saved.length > 0) {
+        const loaded = Object.fromEntries(DAYS.map((d, i) => [d, saved[i]?.available_hours || 0]));
+        setHours(loaded);
+      }
+    } catch {}
+    handleOpenHoursModal();
+  };
   const handleSaveHours = async () => {
     try {
       await saveAvailability(user.username, DAYS.map((d, i) => ({ day_label: "Day"+(i+1), available_hours: hours[d] })));
@@ -113,7 +126,7 @@ export default function DashboardPage() {
             <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#2C1810", margin: "0 0 4px" }}>Weekly Distribution</h1>
             <p style={{ fontSize: "13px", color: "#8C7B70", margin: 0 }}>Your hours are balanced across labs, assignments, and subjects.</p>
           </div>
-          <button onClick={() => setShowHoursModal(true)}
+          <button onClick={() => handleOpenHoursModal()}
             style={{ display: "flex", alignItems: "center", gap: "8px", background: "#2C1810", color: "white", border: "none", padding: "11px 20px", borderRadius: "50px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
             <i className="fa-solid fa-sliders" style={{ fontSize: "12px" }} /> Edit Available Hours
           </button>
