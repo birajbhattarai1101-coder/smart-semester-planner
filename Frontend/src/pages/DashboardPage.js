@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, generateSchedule } from "../api/planner";
+import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, generateSchedule, saveSchedule } from "../api/planner";
 
 const SUBJECTS = [
   { key: "AI", label: "Artificial Intelligence(AI)" },
@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const [returningStep, setReturningStep] = useState(1);
 
   useEffect(() => {
-    if (loginStatus === "returning") {
+    if (loginStatus === "new_week") { setShowHoursModal(true); setLoginStatus(null); } else if (loginStatus === "returning") {
       setShowReturningModal(true);
       setReturningStep(1);
     }
@@ -93,9 +93,9 @@ export default function DashboardPage() {
     if (selectedKeys.length === 0) { alert("Please select at least one subject."); return; }
     setGenerating(true); setError("");
     try {
-      await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k]])));
+      await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k] || 0])));
       const res = await generateSchedule(user.username, 0, selectedKeys);
-      setLastSchedule(res.data.data);
+      setLastSchedule(res.data.data); await saveSchedule(user.username, res.data.data);
       setShowSuccessModal("schedule");
     } catch { setError("Failed to generate. Please set your availability first."); }
     finally { setGenerating(false); }
@@ -189,7 +189,7 @@ export default function DashboardPage() {
           <div style={{ background: "white", borderRadius: "20px", padding: "40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)", textAlign: "center" }}>
             {returningStep === 1 ? (
               <>
-                <div style={{ fontSize: "40px", marginBottom: "16px" }}>⏰</div>
+                <div style={{ fontSize: "40px", marginBottom: "16px" }}>?</div>
                 <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>Welcome back!</h2>
                 <p style={{ fontSize: "14px", color: "#8C7B70", marginBottom: "32px" }}>Any changes to your available hours this week?</p>
                 <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
@@ -199,7 +199,7 @@ export default function DashboardPage() {
               </>
             ) : (
               <>
-                <div style={{ fontSize: "40px", marginBottom: "16px" }}>📋</div>
+                <div style={{ fontSize: "40px", marginBottom: "16px" }}>??</div>
                 <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>Any task modifications?</h2>
                 <p style={{ fontSize: "14px", color: "#8C7B70", marginBottom: "32px" }}>Do you want to add or edit assignments, labs or subjects?</p>
                 <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
@@ -282,7 +282,7 @@ export default function DashboardPage() {
       {showSuccessModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowSuccessModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "44px 40px", width: "360px", maxWidth: "90vw", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>✓</div>
+            <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>?</div>
             <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#2C1810", marginBottom: "10px" }}>
               {showSuccessModal === "hours" ? "Hours Saved!" : "Schedule Ready!"}
             </h3>

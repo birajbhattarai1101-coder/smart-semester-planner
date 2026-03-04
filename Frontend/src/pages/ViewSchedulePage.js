@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { generateSchedule, notifyDeadline, notifyDaily, notifyWeekly } from "../api/planner";
+import { generateSchedule, notifyDeadline, notifyDaily, notifyWeekly, getPreviousSchedule } from "../api/planner";
 
 export default function ViewSchedulePage() {
   const { user } = useAuth();
@@ -12,6 +12,8 @@ export default function ViewSchedulePage() {
   const [loading, setLoading]           = useState(true);
   const [notifStatus, setNotifStatus]   = useState("");
   const [notifLoading, setNotifLoading] = useState("");
+  const [prevSchedule, setPrevSchedule] = useState(null);
+  const [showPrev, setShowPrev] = useState(false);
 
   useEffect(() => { loadSchedule(); }, []);
 
@@ -29,6 +31,7 @@ export default function ViewSchedulePage() {
         setPriorities(data.subject_priorities || []);
       }
     } catch {}
+    try { const prev = await getPreviousSchedule(user.username); if (prev.data.data.schedule) setPrevSchedule(prev.data.data.schedule); } catch {}
     finally { setLoading(false); }
   };
 
@@ -58,6 +61,9 @@ export default function ViewSchedulePage() {
             <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#2C1810", margin: "0 0 4px" }}>Your Study Schedule</h1>
             <p style={{ fontSize: "13px", color: "#8C7B70", margin: 0 }}>AI-generated 7-day plan based on your data.</p>
           </div>
+          <button onClick={() => setShowPrev(!showPrev)} style={{ background: showPrev ? "#B8862E" : "#F5F0EA", color: showPrev ? "white" : "#2C1810", border: "none", padding: "11px 20px", borderRadius: "50px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginRight: "10px" }}>
+            {showPrev ? "Current Schedule" : "Previous Week"}
+          </button>
           <button onClick={() => navigate("/dashboard")}
             style={{ background: "#2C1810", color: "white", border: "none", padding: "11px 20px", borderRadius: "50px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
             Back to Dashboard
@@ -174,3 +180,4 @@ export default function ViewSchedulePage() {
     </div>
   );
 }
+
