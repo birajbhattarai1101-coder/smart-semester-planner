@@ -1,59 +1,100 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { registerUser, loginUser, loginCheck } from "../api/planner";
+import { useAuth } from "../context/AuthContext";
 
-export default function LandingPage() {
-  const navigate = useNavigate();
+const ILLUSTRATION = "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80";
 
-  const features = [
-    { icon: "fa-solid fa-calendar-days", title: "Schedule", desc: "Organize your week for better studying." },
-    { icon: "fa-solid fa-bookmark", title: "Subjects", desc: "All your subjects, sorted to make studying easier." },
-    { icon: "fa-solid fa-clock-rotate-left", title: "Reminders", desc: "Never miss assignments, exams, or deadlines." },
-    { icon: "fa-solid fa-list-check", title: "Tasks", desc: "Keep your semester on track by organizing tasks easily." },
-  ];
+export default function LoginPage({ initialMode = "login" }) {
+  const [mode, setMode]         = useState(initialMode);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail]       = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError]       = useState("");
+  const [loading, setLoading]   = useState(false);
+  const { login }               = useAuth();
+  const navigate                = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault(); setError(""); setLoading(true);
+    try {
+      const isRegister = mode === "register";
+      if (isRegister) await registerUser(username, password, email || undefined);
+      await loginUser(username, password);
+      if (isRegister) {
+        login(username, "new_week");
+        navigate("/onboarding");
+      } else {
+        const checkRes = await loginCheck(username);
+        const status = checkRes.data.data.login_status;
+        login(username, status);
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Something went wrong.");
+    } finally { setLoading(false); }
+  };
+
+  const inputStyle = { flex: 1, border: "none", outline: "none", fontSize: "15px", color: "#2C1810", background: "transparent", fontFamily: "inherit", padding: "8px 0" };
+  const rowStyle = { display: "flex", alignItems: "center", gap: "14px", borderBottom: "1.5px solid #C9B99A", paddingBottom: "4px", marginBottom: "28px" };
 
   return (
-    <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "#FAF8F4", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 48px", background: "white", borderBottom: "1px solid #EEE9E0", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <i className="fa-solid fa-book-open-reader" style={{ fontSize: "22px", color: "#B8862E" }} />
-          <span style={{ fontSize: "18px", fontWeight: 800, color: "#2C1810", letterSpacing: "-0.3px" }}>Smart Semester Planner</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
-          <button onClick={() => navigate("/login")} style={{ background: "none", border: "none", fontSize: "15px", fontWeight: 500, color: "#2C1810", cursor: "pointer", fontFamily: "inherit" }}>Login</button>
-          <button onClick={() => navigate("/register")} style={{ background: "#2C1810", color: "white", border: "none", padding: "11px 26px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Join Now</button>
-        </div>
-      </nav>
+    <div style={{ minHeight: "100vh", background: "#F5F2EE", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "20px" }}>
+      <div style={{ display: "flex", width: "720px", maxWidth: "100%", borderRadius: "20px", overflow: "hidden", boxShadow: "0 8px 24px rgba(44,24,16,0.08), 0 32px 64px rgba(44,24,16,0.12)", background: "white" }}>
 
-      <section style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "120px 48px 100px", textAlign: "center", background: "linear-gradient(180deg, #FAF8F4 0%, #F0E8D8 100%)" }}>
-        <h1 style={{ fontSize: "clamp(44px, 6vw, 72px)", fontWeight: 900, color: "#2C1810", lineHeight: 1.1, marginBottom: "20px", maxWidth: "760px", letterSpacing: "-2px" }}>
-          Master Your <span style={{ color: "#B8862E" }}>Semester</span><br />With AI Precision.
-        </h1>
-        <p style={{ fontSize: "17px", color: "#6B5A4E", maxWidth: "520px", lineHeight: 1.7, marginBottom: "44px" }}>
-          Stop guessing. Our AI analyzes your deadlines and study habits to build the perfect, stress-free academic schedule.
-        </p>
-        <button onClick={() => navigate("/register")} style={{ background: "#2C1810", color: "white", border: "none", padding: "18px 44px", borderRadius: "10px", fontSize: "17px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-          Start Planning — It's Free
-        </button>
-      </section>
+        <div style={{ width: "48%", background: "#E8DDD0", position: "relative", overflow: "hidden", minHeight: "420px" }}>
+          <img src={ILLUSTRATION} alt="student studying" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => { e.target.style.display = "none"; }} />
+        </div>
 
-      <section style={{ padding: "80px 48px", background: "#FAF8F4" }}>
-        <h2 style={{ textAlign: "center", fontSize: "32px", fontWeight: 800, color: "#2C1810", marginBottom: "48px" }}>Why use a Smart Planner?</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px", maxWidth: "820px", margin: "0 auto" }}>
-          {features.map(f => (
-            <div key={f.title} style={{ background: "white", borderRadius: "16px", padding: "32px 28px", border: "1px solid #EEE9E0" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                <i className={f.icon} style={{ fontSize: "22px", color: "#B8862E" }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#2C1810", margin: 0 }}>{f.title}</h3>
-              </div>
-              <p style={{ fontSize: "14px", color: "#6B5A4E", lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+        <div style={{ width: "52%", padding: "36px 40px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#2C1810", marginBottom: "4px", textAlign: "center" }}>
+            {mode === "login" ? "Log In" : "Create Account"}
+          </h2>
+          <p style={{ fontSize: "13px", color: "#9A8880", marginBottom: "24px", textAlign: "center" }}>
+            {mode === "login" ? "Welcome back to your planner" : "Join the Smart Semester community"}
+          </p>
+
+          {error && (
+            <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#DC2626", marginBottom: "20px" }}>
+              {error}
             </div>
-          ))}
-        </div>
-      </section>
+          )}
 
-      <footer style={{ background: "#2C1810", padding: "28px 48px", textAlign: "center" }}>
-        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", margin: 0 }}>2026 Smart Semester Planner | Crafted for Academic Excellence</p>
-      </footer>
+          <form onSubmit={handleSubmit}>
+            <div style={rowStyle}>
+              <i className="fa-solid fa-user" style={{ color: "#B8862E", fontSize: "16px" }} />
+              <input type="text" placeholder="User Name" value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={inputStyle} />
+            </div>
+
+            {mode === "register" && (
+              <div style={rowStyle}>
+                <i className="fa-solid fa-envelope" style={{ color: "#B8862E", fontSize: "16px" }} />
+                <input type="email" placeholder="Email Address" autoComplete="off" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+              </div>
+            )}
+
+            <div style={rowStyle}>
+              <i className="fa-solid fa-lock" style={{ color: "#B8862E", fontSize: "16px" }} />
+              <input type={showPass ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={inputStyle} />
+              <button type="button" onClick={() => setShowPass(!showPass)} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8862E", padding: "4px", fontSize: "16px" }}>
+                {showPass ? <i className="fa-solid fa-eye-slash" /> : <i className="fa-solid fa-eye" />}
+              </button>
+            </div>
+
+            <button type="submit" disabled={loading} style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "15px", borderRadius: "8px", fontSize: "16px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", marginBottom: "22px", opacity: loading ? 0.7 : 1 }}>
+              {loading ? "Please wait..." : mode === "login" ? "Log In" : "Sign Up"}
+            </button>
+          </form>
+
+          <p style={{ textAlign: "center", fontSize: "14px", color: "#6B5A4E" }}>
+            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+            <button onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }} style={{ background: "none", border: "none", color: "#B8862E", fontWeight: 700, cursor: "pointer", fontSize: "14px", fontFamily: "inherit" }}>
+              {mode === "login" ? "Register" : "Log In"}
+            </button>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
