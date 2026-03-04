@@ -41,6 +41,7 @@ export default function LoginPage({ initialMode = "login" }) {
 
   return (
     <div style={{ minHeight: "100vh", background: "#F5F2EE", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "20px" }}>
+      <style>{`input::-ms-reveal, input::-ms-clear { display: none; } input[type="password"]::-webkit-credentials-auto-fill-button { display: none; }`}</style>
       <div style={{ display: "flex", width: "720px", maxWidth: "100%", borderRadius: "20px", overflow: "hidden", boxShadow: "0 8px 24px rgba(44,24,16,0.08), 0 32px 64px rgba(44,24,16,0.12)", background: "white" }}>
 
         <div style={{ width: "48%", background: "#E8DDD0", position: "relative", overflow: "hidden", minHeight: "420px" }}>
