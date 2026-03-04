@@ -1,4 +1,4 @@
-﻿import sys, os
+import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -25,5 +25,7 @@ def init_all_tables():
     from Database.user_availability_db import UserAvailability
     from Database.user_tasks_db import UserTask
     from Database.user_credentials_db import UserCredential
+    from Database.user_session_db import UserSession
+    from Database.user_schedule_db import UserSchedule
     Base.metadata.create_all(bind=engine)
     print("[DB] All tables initialized.")

@@ -24,6 +24,7 @@ from user_coverage_db import upsert_coverage, get_coverage_for_user
 from user_availability_db import upsert_availability, get_availability_for_user, clear_availability
 from user_tasks_db import add_task, get_tasks_for_user, delete_task
 from user_session_db import check_and_update_session
+from user_schedule_db import save_schedule, get_saved_schedule
 from notification_routes import notify_bp
 
 from flask_cors import CORS
@@ -187,9 +188,29 @@ def generate_schedule():
         import traceback; traceback.print_exc()
         return _err(str(e))
 
+
+@app.post("/api/schedule/save")
+def save_user_schedule():
+    try:
+        body = request.get_json(force=True) or {}
+        uid = body.get("user_id", "")
+        schedule_data = body.get("schedule_data")
+        if not uid or not schedule_data: return _err("user_id and schedule_data required")
+        save_schedule(uid, schedule_data)
+        return _ok({"saved": True})
+    except Exception as e: return _err(str(e))
+
+@app.get("/api/schedule/previous/<user_id>")
+def get_previous_schedule(user_id):
+    try:
+        data = get_saved_schedule(user_id)
+        if not data: return _ok({"schedule": None})
+        return _ok({"schedule": data})
+    except Exception as e: return _err(str(e))
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
+
 
 
 
