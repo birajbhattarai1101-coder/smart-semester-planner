@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser, loginUser, loginCheck } from "../api/planner";
 import { useAuth } from "../context/AuthContext";
@@ -59,7 +59,7 @@ export default function LoginPage({ initialMode = "login" }) {
               e.target.parentElement.style.background = "linear-gradient(135deg, #E8DDD0 0%, #D4C4B0 100%)";
               const div = document.createElement("div");
               div.style.cssText = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:80px;";
-              div.textContent = "🧑‍💻";
+              div.textContent = "?????";
               e.target.parentElement.appendChild(div);
             }}
           />
@@ -81,23 +81,23 @@ export default function LoginPage({ initialMode = "login" }) {
 
           <form onSubmit={handleSubmit}>
             <div style={rowStyle}>
-              <span style={{ color: "#B8862E", fontSize: "16px" }}>👤</span>
+              <span style={{ color: "#B8862E", fontSize: "16px" }}>??</span>
               <input type="text" placeholder="User Name" value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={inputStyle} />
             </div>
 
             {mode === "register" && (
               <div style={rowStyle}>
-                <span style={{ color: "#B8862E", fontSize: "16px" }}>✉️</span>
-                <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+                <span style={{ color: "#B8862E", fontSize: "16px" }}>??</span>
+                <input type="email" placeholder="Email Address" autoComplete="off" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
               </div>
             )}
 
             <div style={rowStyle}>
-              <span style={{ color: "#B8862E", fontSize: "16px" }}>🔒</span>
+              <span style={{ color: "#B8862E", fontSize: "16px" }}>??</span>
               <input type={showPass ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={inputStyle} />
               <button type="button" onClick={() => setShowPass(!showPass)}
                 style={{ background: "none", border: "none", cursor: "pointer", color: "#B8862E", padding: "4px", fontSize: "16px" }}>
-                {showPass ? "🙈" : "👁️"}
+                {showPass ? "??" : "???"}
               </button>
             </div>
 
