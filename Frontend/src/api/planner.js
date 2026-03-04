@@ -1,7 +1,7 @@
-﻿import axios from "axios";
+import axios from "axios";
 
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "https://smart-planner-backend.onrender.com/api",
+  baseURL: "https://smart-planner-backend.onrender.com/api",
   headers: { "Content-Type": "application/json" },
   timeout: 30000,
 });
