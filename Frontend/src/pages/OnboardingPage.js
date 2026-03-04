@@ -9,10 +9,10 @@ export default function OnboardingPage() {
   return (
     <>
       <style>{`html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }`}</style>
-      <div style={{ display: "flex", height: "100vh", width: "100vw", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <div style={{ display: "flex", height: "100vh", width: "100vw", fontFamily: "'Plus Jakarta Sans', sans-serif", overflow: "hidden" }}>
 
         {/* LEFT */}
-        <div style={{ flex: 1, background: "#FAF8F4", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 72px" }}>
+        <div style={{ flex: 1, minWidth: 0, background: "#FAF8F4", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 72px" }}>
           <div style={{ marginBottom: "36px" }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "11px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#2C1810" }}>
               <span style={{ width: "8px", height: "8px", background: "#B8862E", borderRadius: "50%", display: "inline-block" }} />
@@ -34,7 +34,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* RIGHT */}
-        <div style={{ width: "45%", background: "#2C1810", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 60px" }}>
+        <div style={{ width: "38%", flexShrink: 0, background: "#2C1810", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 48px" }}>
           {[
             { phase: "PHASE 01", title: "Define Capacity", desc: "Tell us how many hours you can truly give to your studies each week.", active: true },
             { phase: "PHASE 02", title: "Sync Syllabus", desc: "Upload your assignments and labs to populate your task engine.", active: false },
