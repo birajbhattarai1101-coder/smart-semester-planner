@@ -19,39 +19,11 @@ const HOURS_MAP = { Assignment:{ Easy:1.5, Medium:2, Hard:3 }, Lab:{ Easy:0.75, 
 
 export default function DashboardPage() {
   const { user, loginStatus, setLoginStatus } = useAuth();
+  const navigate = useNavigate();
   const [showReturningModal, setShowReturningModal] = useState(false);
   const [returningStep, setReturningStep] = useState(1);
-
-  useEffect(() => {
-    if (loginStatus === "new_week") { handleOpenHoursModal(); setLoginStatus(null); } else if (loginStatus === "returning") {
-      setShowReturningModal(true);
-      setReturningStep(1);
-    }
-  }, [loginStatus]);
-
-  const handleReturningHoursYes = () => {
-    setShowReturningModal(false);
-    setLoginStatus(null);
-    handleOpenHoursModal();
-  };
-
-  const handleReturningHoursNo = () => {
-    setReturningStep(2);
-  };
-
-  const handleReturningTasksYes = () => {
-    setShowReturningModal(false);
-    setLoginStatus(null);
-  };
-
-  const handleReturningTasksNo = () => {
-    setShowReturningModal(false);
-    setLoginStatus(null);
-    navigate("/view-schedule");
-  };
-  const navigate = useNavigate();
   const [coverage, setCoverage]               = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, 0])));
-  const [lastSchedule, setLastSchedule] = useState(null);
+  const [lastSchedule, setLastSchedule]       = useState(null);
   const [checked, setChecked]                 = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, false])));
   const [hours, setHours]                     = useState(Object.fromEntries(DAYS.map(d => [d, 0])));
   const [tasks, setTasks]                     = useState([]);
@@ -59,16 +31,18 @@ export default function DashboardPage() {
   const [showTaskModal, setShowTaskModal]     = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(null);
   const [taskForm, setTaskForm]               = useState({ task_name: "", difficulty: "Medium", deadline: "" });
-  const [generating, setGenerating]           = useState(false);
+  const [hoursError, setHoursError] = useState("");
+  const [generating, setGenerating] = useState(false);
   const [error, setError]                     = useState("");
+
+  useEffect(() => {
+    if (loginStatus === "new_week") { openHoursModal(); setLoginStatus(null); }
+    else if (loginStatus === "returning") { setShowReturningModal(true); setReturningStep(1); }
+  }, [loginStatus]);
 
   useEffect(() => { fetchTasks(); }, []);
 
-  const fetchTasks = async () => {
-    try { const res = await getTasks(user.username); setTasks(res.data.data.tasks || []); } catch {}
-  };
-
-  const handleOpenHoursModal = async () => {
+  const openHoursModal = async () => {
     try {
       const res = await getAvailability(user.username);
       const saved = res.data.data.availability || [];
@@ -77,9 +51,25 @@ export default function DashboardPage() {
         setHours(loaded);
       }
     } catch {}
-    handleOpenHoursModal();
+    setShowHoursModal(true);
   };
+
+  const handleReturningHoursYes = () => { setShowReturningModal(false); setLoginStatus(null); openHoursModal(); };
+  const handleReturningHoursNo  = () => { setReturningStep(2); };
+  const handleReturningTasksYes = () => { setShowReturningModal(false); setLoginStatus(null); };
+  const handleReturningTasksNo  = () => { setShowReturningModal(false); setLoginStatus(null); navigate("/view-schedule"); };
+
+  const fetchTasks = async () => {
+    try { const res = await getTasks(user.username); setTasks(res.data.data.tasks || []); } catch {}
+  };
+
   const handleSaveHours = async () => {
+    const filledDays = DAYS.filter(d => hours[d] > 0).length;
+    const exceeds = DAYS.filter(d => hours[d] > 7);
+    if (totalHours === 0) { setHoursError("Please enter your available study hours before saving."); return; }
+    if (exceeds.length > 0) { setHoursError("Maximum 7 hours per day allowed."); return; }
+    if (filledDays < 5) { setHoursError("Please enter hours for at least 5 days for a balanced study plan."); return; }
+    setHoursError("");
     try {
       await saveAvailability(user.username, DAYS.map((d, i) => ({ day_label: "Day"+(i+1), available_hours: hours[d] })));
       setShowHoursModal(false);
@@ -126,8 +116,7 @@ export default function DashboardPage() {
             <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#2C1810", margin: "0 0 4px" }}>Weekly Distribution</h1>
             <p style={{ fontSize: "13px", color: "#8C7B70", margin: 0 }}>Your hours are balanced across labs, assignments, and subjects.</p>
           </div>
-          <button onClick={() => handleOpenHoursModal()}
-            style={{ display: "flex", alignItems: "center", gap: "8px", background: "#2C1810", color: "white", border: "none", padding: "11px 20px", borderRadius: "50px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+          <button onClick={openHoursModal} style={{ display: "flex", alignItems: "center", gap: "8px", background: "#2C1810", color: "white", border: "none", padding: "11px 20px", borderRadius: "50px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
             <i className="fa-solid fa-sliders" style={{ fontSize: "12px" }} /> Edit Available Hours
           </button>
         </div>
@@ -150,14 +139,16 @@ export default function DashboardPage() {
                     <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#8C7B70" }}>{col.sub}</p>
                   </div>
                 </div>
-                <div style={{ width: "36px", height: "36px", background: "#2C1810", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "20px", flexShrink: 0 }}>+</div>
+                <div style={{ width: "36px", height: "36px", background: "#2C1810", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <i className="fa-solid fa-plus" style={{ color: "white", fontSize: "14px" }} />
+                </div>
               </div>
               {col.items.map((t, i) => (
                 <div key={t.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 24px", background: i % 2 === 0 ? "#FAFAF8" : "white", borderTop: "1px solid #F0EBE3" }}>
                   <span style={{ fontSize: "13px", color: "#2C1810", fontWeight: 600 }}>{t.task_name}</span>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <span style={{ fontSize: "11px", color: "#8C7B70" }}>{t.deadline}</span>
-                    <button onClick={() => handleDelete(t.id)} style={{ background: "none", border: "none", color: "#C9A080", cursor: "pointer", fontSize: "14px", lineHeight: 1 }}>x</button>
+                    <button onClick={() => handleDelete(t.id)} style={{ background: "none", border: "none", color: "#C9A080", cursor: "pointer", fontSize: "14px", lineHeight: 1 }}>×</button>
                   </div>
                 </div>
               ))}
@@ -173,36 +164,37 @@ export default function DashboardPage() {
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div onClick={() => setChecked(p => ({...p, [s.key]: !p[s.key]}))}
                   style={{ width: "20px", height: "20px", borderRadius: "5px", border: checked[s.key] ? "none" : "2px solid #C9B99A", background: checked[s.key] ? "#B8862E" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {checked[s.key] && <span style={{ color: "white", fontSize: "13px", fontWeight: 700 }}>&#10003;</span>}
+                  {checked[s.key] && <i className="fa-solid fa-check" style={{ color: "white", fontSize: "11px" }} />}
                 </div>
                 <span style={{ fontSize: "15px", fontWeight: 600, color: "#2C1810" }}>{s.label}</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                {checked[s.key] && <span style={{ fontSize: "13px", color: "#8C7B70" }}>syllabus covered</span>}
-                {checked[s.key] && <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-                  <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="%" value={coverage[s.key] === 0 ? "" : coverage[s.key]}
-                  id={"cov_" + s.key}
-                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setCoverage(p => ({ ...p, [s.key]: v === "" ? 0 : Math.min(100, Number(v)) })); }}
-                  style={{ width: "62px", textAlign: "center", padding: "7px 8px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
-                  <span style={{ fontSize: "13px", color: "#8C7B70", marginLeft: "4px" }}>%</span>
-                </div>}
-              </div>
+              {checked[s.key] && (
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "13px", color: "#8C7B70" }}>syllabus covered</span>
+                  <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="%" value={coverage[s.key] === 0 ? "" : coverage[s.key]} id={"cov_" + s.key}
+                      onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setCoverage(p => ({ ...p, [s.key]: v === "" ? 0 : Math.min(100, Number(v)) })); }}
+                      style={{ width: "62px", textAlign: "center", padding: "7px 8px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
+                    <span style={{ fontSize: "13px", color: "#8C7B70", marginLeft: "4px" }}>%</span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
 
-        <button id="generateBtn" onClick={handleGenerate} disabled={generating}
-          style={{ width: "100%", background: "#2C1810", color: "white", border: "none", padding: "18px", borderRadius: "12px", fontSize: "16px", fontWeight: 700, cursor: generating ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: generating ? 0.8 : 1 }}>
+        <button onClick={handleGenerate} disabled={generating} style={{ width: "100%", background: "#2C1810", color: "white", border: "none", padding: "18px", borderRadius: "12px", fontSize: "16px", fontWeight: 700, cursor: generating ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: generating ? 0.8 : 1 }}>
           {generating ? "Generating..." : "Generate Study Schedule"}
         </button>
       </div>
 
+      {/* RETURNING MODAL */}
       {showReturningModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }}>
           <div style={{ background: "white", borderRadius: "20px", padding: "40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)", textAlign: "center" }}>
             {returningStep === 1 ? (
               <>
-                <div style={{ fontSize: "40px", marginBottom: "16px" }}>?</div>
+                <i className="fa-solid fa-calendar-check" style={{ fontSize: "36px", color: "#B8862E", marginBottom: "16px", display: "block" }} />
                 <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>Welcome back!</h2>
                 <p style={{ fontSize: "14px", color: "#8C7B70", marginBottom: "32px" }}>Any changes to your available hours this week?</p>
                 <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
@@ -212,7 +204,7 @@ export default function DashboardPage() {
               </>
             ) : (
               <>
-                <div style={{ fontSize: "40px", marginBottom: "16px" }}>??</div>
+                <i className="fa-solid fa-list-check" style={{ fontSize: "36px", color: "#B8862E", marginBottom: "16px", display: "block" }} />
                 <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>Any task modifications?</h2>
                 <p style={{ fontSize: "14px", color: "#8C7B70", marginBottom: "32px" }}>Do you want to add or edit assignments, labs or subjects?</p>
                 <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
@@ -225,38 +217,38 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* HOURS MODAL */}
       {showHoursModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowHoursModal(false)}>
-          <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "400px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ textAlign: "center", marginBottom: "28px" }}>
-              <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: "28px", color: "#B8862E", marginBottom: "12px", display: "block" }} />
-              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "4px" }}>Weekly Study Plan</h3>
-              <p style={{ fontSize: "13px", color: "#8C7B70", margin: 0 }}>Enter hours for the next 7 days</p>
+          <div style={{ background: "white", borderRadius: "20px", padding: "24px 32px", width: "340px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: "center", marginBottom: "18px" }}>
+              <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: "22px", color: "#B8862E", marginBottom: "8px", display: "block" }} />
+              <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#2C1810", marginBottom: "3px" }}>Weekly Study Plan</h3>
+              <p style={{ fontSize: "12px", color: "#8C7B70", margin: 0 }}>Enter hours for the next 7 days (max 7hr per day)</p>
             </div>
             {DAYS.map(day => (
-              <div key={day} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                <span style={{ fontSize: "14px", fontWeight: 600, color: "#2C1810" }}>{day}</span>
+              <div key={day} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "#2C1810" }}>{day}</span>
                 <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={"hr_" + day} value={hours[day] === 0 ? "" : hours[day]}
-                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setHours(p => ({ ...p, [day]: v === "" ? 0 : Math.min(12, Number(v)) })); }}
+                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setHours(p => ({ ...p, [day]: v === "" ? 0 : Math.min(7, Number(v)) })); }}
                   onKeyDown={e => { if (e.key === "Enter") { const idx = DAYS.indexOf(day); if (idx < DAYS.length - 1) { document.getElementById("hr_" + DAYS[idx + 1])?.focus(); } else { document.getElementById("saveHoursBtn")?.click(); } } }}
                   style={{ width: "68px", textAlign: "center", padding: "8px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
               </div>
             ))}
-            <p style={{ textAlign: "center", fontSize: "14px", fontWeight: 700, color: "#2C1810", margin: "16px 0" }}>Total Weekly Hours: {totalHours}hr</p>
-            <button id="saveHoursBtn" onClick={handleSaveHours}
-              style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "14px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            <p style={{ textAlign: "center", fontSize: "13px", fontWeight: 700, color: "#2C1810", margin: "12px 0" }}>Total Weekly Hours: {totalHours}hr</p>
+            {hoursError && <p style={{ textAlign: "center", fontSize: "12px", color: "#DC2626", margin: "0 0 10px", fontWeight: 600 }}>{hoursError}</p>}
+            <button id="saveHoursBtn" onClick={handleSaveHours} style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
               Save Hours
             </button>
           </div>
         </div>
       )}
 
+      {/* TASK MODAL */}
       {showTaskModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowTaskModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "24px" }}>
-              Add {showTaskModal === "Assignment" ? "Assignment" : "Lab Report"}
-            </h3>
+            <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "24px" }}>Add {showTaskModal === "Assignment" ? "Assignment" : "Lab Report"}</h3>
             <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Task Name</label>
             <input type="text" placeholder={showTaskModal === "Assignment" ? "e.g. DBMS Assignment 1" : "e.g. OS Lab Report 2"} value={taskForm.task_name}
               onChange={e => setTaskForm(p => ({ ...p, task_name: e.target.value }))}
@@ -279,26 +271,21 @@ export default function DashboardPage() {
             <input type="date" value={taskForm.deadline} onChange={e => setTaskForm(p => ({ ...p, deadline: e.target.value }))}
               style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: "24px" }} />
             <div style={{ display: "flex", gap: "12px" }}>
-              <button onClick={() => setShowTaskModal(null)}
-                style={{ flex: 1, background: "none", border: "1.5px solid #D9CEC4", color: "#2C1810", padding: "12px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                Cancel
-              </button>
-              <button onClick={handleAddTask}
-                style={{ flex: 1, background: "#2C1810", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                Add Task
-              </button>
+              <button onClick={() => setShowTaskModal(null)} style={{ flex: 1, background: "none", border: "1.5px solid #D9CEC4", color: "#2C1810", padding: "12px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={handleAddTask} style={{ flex: 1, background: "#2C1810", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Add Task</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* SUCCESS MODAL */}
       {showSuccessModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowSuccessModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "44px 40px", width: "360px", maxWidth: "90vw", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>?</div>
-            <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#2C1810", marginBottom: "10px" }}>
-              {showSuccessModal === "hours" ? "Hours Saved!" : "Schedule Ready!"}
-            </h3>
+            <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <i className={showSuccessModal === "hours" ? "fa-solid fa-check" : "fa-solid fa-calendar-days"} style={{ fontSize: "24px", color: "white" }} />
+            </div>
+            <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#2C1810", marginBottom: "10px" }}>{showSuccessModal === "hours" ? "Hours Saved!" : "Schedule Ready!"}</h3>
             <p style={{ fontSize: "13px", color: "#8C7B70", marginBottom: "28px", lineHeight: 1.7 }}>
               {showSuccessModal === "hours" ? "Your weekly study capacity has been updated for your 6th-semester subjects." : "Your weekly plan has been optimized successfully."}
             </p>
@@ -312,6 +299,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-
-
