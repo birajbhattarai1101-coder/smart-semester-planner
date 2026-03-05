@@ -17,88 +17,73 @@ const DAYS = Array.from({length: 7}, (_, i) => ALL_DAYS[(today.getDay() + i) % 7
 const DIFFS = ["Easy","Medium","Hard"];
 const HOURS_MAP = { Assignment:{ Easy:1.5, Medium:2, Hard:3 }, Lab:{ Easy:0.75, Medium:1.5, Hard:2 } };
 
-const STORAGE_KEY_CHECKED = "studyflow_checked_subjects";
-const STORAGE_KEY_COVERAGE = "studyflow_coverage";
-
 export default function DashboardPage() {
   const { user, loginStatus, setLoginStatus } = useAuth();
   const navigate = useNavigate();
   const [showReturningModal, setShowReturningModal] = useState(false);
   const [returningStep, setReturningStep] = useState(1);
-
-  useEffect(() => {
-    if (loginStatus === "new_week") { openHoursModal(); setLoginStatus(null); }
-    else if (loginStatus === "returning") {
-      setShowReturningModal(true);
-      setReturningStep(1);
-    }
-  }, [loginStatus]);
-
-  const handleReturningHoursYes = () => { setShowReturningModal(false); setLoginStatus(null); openHoursModal(); };
-  const handleReturningHoursNo = () => { setReturningStep(2); };
-  const handleReturningTasksYes = () => { setShowReturningModal(false); setLoginStatus(null); };
-  const handleReturningTasksNo = () => { setShowReturningModal(false); setLoginStatus(null); navigate("/view-schedule"); };
-
-  const [coverage, setCoverage] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_COVERAGE + "_" + (window.__sf_user || ""));
-      return saved ? JSON.parse(saved) : Object.fromEntries(SUBJECTS.map(s => [s.key, 0]));
-    } catch { return Object.fromEntries(SUBJECTS.map(s => [s.key, 0])); }
-  });
-  const [lastSchedule, setLastSchedule]       = useState(null);
-  const [checked, setChecked] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_CHECKED + "_" + (window.__sf_user || ""));
-      return saved ? JSON.parse(saved) : Object.fromEntries(SUBJECTS.map(s => [s.key, false]));
-    } catch { return Object.fromEntries(SUBJECTS.map(s => [s.key, false])); }
-  });
-  const [hours, setHours]                     = useState(Object.fromEntries(DAYS.map(d => [d, 0])));
-  const [tasks, setTasks]                     = useState([]);
-  const [showHoursModal, setShowHoursModal]   = useState(false);
-  const [showTaskModal, setShowTaskModal]     = useState(null);
+  const [coverage, setCoverage] = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, 0])));
+  const [lastSchedule, setLastSchedule] = useState(null);
+  const [checked, setChecked] = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, false])));
+  const [hours, setHours] = useState(Object.fromEntries(DAYS.map(d => [d, 0])));
+  const [tasks, setTasks] = useState([]);
+  const [showHoursModal, setShowHoursModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(null);
-  const [taskForm, setTaskForm]               = useState({ task_name: "", difficulty: "Medium", deadline: "" });
-  const [generating, setGenerating]           = useState(false);
-  const [error, setError]                     = useState("");
+  const [taskForm, setTaskForm] = useState({ task_name: "", difficulty: "Medium", deadline: "" });
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState("");
 
+  // Load everything once user is known
   useEffect(() => {
-    if (user?.username) {
-      window.__sf_user = user.username;
-      fetchTasks();
-      fetchCoverage();
-    }
+    if (!user?.username) return;
+    fetchTasks();
+    loadCheckedAndCoverage();
   }, [user]);
 
-  const fetchTasks = async () => {
-    try { const res = await getTasks(user.username); setTasks(res.data.data.tasks || []); } catch {}
-  };
+  // Handle login status AFTER user and data are loaded
+  useEffect(() => {
+    if (!user?.username) return;
+    if (loginStatus === "new_week") { openHoursModal(); setLoginStatus(null); }
+    else if (loginStatus === "returning") { setShowReturningModal(true); setReturningStep(1); }
+  }, [loginStatus, user]);
 
-  const fetchCoverage = async () => {
+  const loadCheckedAndCoverage = async () => {
+    const uname = user.username;
+    // First load from localStorage immediately so UI shows fast
     try {
-      const res = await getCoverage(user.username);
+      const savedChecked = localStorage.getItem("sf_checked_" + uname);
+      const savedCoverage = localStorage.getItem("sf_coverage_" + uname);
+      if (savedChecked) setChecked(JSON.parse(savedChecked));
+      if (savedCoverage) setCoverage(JSON.parse(savedCoverage));
+    } catch {}
+    // Then sync from backend (source of truth)
+    try {
+      const res = await getCoverage(uname);
       const rows = res.data.data.coverage || [];
       if (rows.length > 0) {
         const loadedCoverage = Object.fromEntries(rows.map(r => [r.subject, r.coverage_percentage || 0]));
-        setCoverage(prev => {
-          const merged = { ...prev, ...loadedCoverage };
-          localStorage.setItem(STORAGE_KEY_COVERAGE + "_" + user.username, JSON.stringify(merged));
-          return merged;
-        });
-        // Load checked state from localStorage, fallback to subjects that have coverage saved
-        const storedChecked = localStorage.getItem(STORAGE_KEY_CHECKED + "_" + user.username);
+        setCoverage(loadedCoverage);
+        localStorage.setItem("sf_coverage_" + uname, JSON.stringify(loadedCoverage));
+        // Only infer checked from backend if no localStorage exists
+        const storedChecked = localStorage.getItem("sf_checked_" + uname);
         if (!storedChecked) {
           const inferredChecked = Object.fromEntries(SUBJECTS.map(s => [s.key, rows.some(r => r.subject === s.key)]));
           setChecked(inferredChecked);
-          localStorage.setItem(STORAGE_KEY_CHECKED + "_" + user.username, JSON.stringify(inferredChecked));
+          localStorage.setItem("sf_checked_" + uname, JSON.stringify(inferredChecked));
         }
       }
     } catch {}
   };
 
+  const fetchTasks = async () => {
+    try { const res = await getTasks(user.username); setTasks(res.data.data.tasks || []); } catch {}
+  };
+
   const updateChecked = (key, value) => {
     setChecked(prev => {
       const next = { ...prev, [key]: value };
-      localStorage.setItem(STORAGE_KEY_CHECKED + "_" + user.username, JSON.stringify(next));
+      localStorage.setItem("sf_checked_" + user.username, JSON.stringify(next));
       return next;
     });
   };
@@ -106,7 +91,7 @@ export default function DashboardPage() {
   const updateCoverage = (key, value) => {
     setCoverage(prev => {
       const next = { ...prev, [key]: value };
-      localStorage.setItem(STORAGE_KEY_COVERAGE + "_" + user.username, JSON.stringify(next));
+      localStorage.setItem("sf_coverage_" + user.username, JSON.stringify(next));
       return next;
     });
   };
@@ -131,6 +116,11 @@ export default function DashboardPage() {
     } catch {}
   };
 
+  const handleReturningHoursYes = () => { setShowReturningModal(false); setLoginStatus(null); openHoursModal(); };
+  const handleReturningHoursNo = () => { setReturningStep(2); };
+  const handleReturningTasksYes = () => { setShowReturningModal(false); setLoginStatus(null); };
+  const handleReturningTasksNo = () => { setShowReturningModal(false); setLoginStatus(null); navigate("/view-schedule"); };
+
   const handleAddTask = async () => {
     if (!taskForm.task_name || !taskForm.deadline) return;
     try {
@@ -152,15 +142,16 @@ export default function DashboardPage() {
     try {
       await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k] || 0])));
       const res = await generateSchedule(user.username, 0, selectedKeys);
-      setLastSchedule(res.data.data); await saveSchedule(user.username, res.data.data);
+      setLastSchedule(res.data.data);
+      await saveSchedule(user.username, res.data.data);
       setShowSuccessModal("schedule");
     } catch { setError("Failed to generate. Please set your availability first."); }
     finally { setGenerating(false); }
   };
 
   const assignments = tasks.filter(t => t.task_type === "Assignment");
-  const labs        = tasks.filter(t => t.task_type === "Lab");
-  const totalHours  = Object.values(hours).reduce((s, v) => s + v, 0);
+  const labs = tasks.filter(t => t.task_type === "Lab");
+  const totalHours = Object.values(hours).reduce((s, v) => s + v, 0);
 
   return (
     <div style={{ marginLeft: "260px", minHeight: "100vh", background: "#FAF8F4", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
