@@ -1,4 +1,4 @@
-import sys, os, datetime
+﻿import sys, os, datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -24,7 +24,7 @@ from user_coverage_db import upsert_coverage, get_coverage_for_user
 from user_availability_db import upsert_availability, get_availability_for_user, clear_availability
 from user_tasks_db import add_task, get_tasks_for_user, delete_task
 from user_session_db import check_and_update_session
-from user_schedule_db import save_schedule, get_saved_schedule
+from user_schedule_db import save_schedule, get_saved_schedule, get_previous_schedule
 from notification_routes import notify_bp
 
 from flask_cors import CORS
@@ -201,15 +201,16 @@ def save_user_schedule():
     except Exception as e: return _err(str(e))
 
 @app.get("/api/schedule/previous/<user_id>")
-def get_previous_schedule(user_id):
+def get_previous_schedule_route(user_id):
     try:
-        data = get_saved_schedule(user_id)
+        data = get_previous_schedule(user_id)
         if not data: return _ok({"schedule": None})
         return _ok({"schedule": data})
     except Exception as e: return _err(str(e))
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
+
 
 
 
