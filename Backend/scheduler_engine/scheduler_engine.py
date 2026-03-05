@@ -3,6 +3,7 @@
 CAP_ASSIGNMENT = 0.45
 CAP_LAB        = 0.25
 CAP_STUDY      = 0.30
+# Total caps intentionally sum to 1.0 to use all available hours
 URGENCY_OVERRIDE_DAYS = 2
 
 def _date_labels(start_date, days=7):
@@ -55,7 +56,7 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
         else:
             assign_alloc = round(avail * CAP_ASSIGNMENT + carryover_assign, 4)
             lab_alloc = round(avail * CAP_LAB + carryover_lab, 4)
-            study_alloc = round(avail * CAP_STUDY, 4)
+            study_alloc = round(avail - (avail * CAP_ASSIGNMENT) - (avail * CAP_LAB), 4)
             carryover_assign = 0.0
             carryover_lab = 0.0
 
@@ -103,3 +104,4 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
             t["deadline_days"] = max(0, t["deadline_days"] - 1)
 
     return schedule_rows
+
