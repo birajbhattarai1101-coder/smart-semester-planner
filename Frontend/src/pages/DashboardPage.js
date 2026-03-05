@@ -147,9 +147,7 @@ export default function DashboardPage() {
     try {
       await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k] || 0])));
       const res = await generateSchedule(user.username, 0, selectedKeys);
-      setLastSchedule(res.data.data);
-      await saveSchedule(user.username, res.data.data);
-      setShowSuccessModal("schedule");
+      setLastSchedule(res.data.data); await saveSchedule(user.username, res.data.data); setShowSuccessModal("schedule");
     } catch { setError("Failed to generate. Please set your availability first."); }
     finally { setGenerating(false); }
   };
@@ -355,7 +353,7 @@ export default function DashboardPage() {
             <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>✓</div>
             <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#2C1810", marginBottom: "10px" }}>Schedule Ready!</h3>
             <p style={{ fontSize: "13px", color: "#8C7B70", marginBottom: "28px", lineHeight: 1.7 }}>Your weekly plan has been optimized successfully.</p>
-            <button onClick={() => { setShowSuccessModal(null); navigate("/view-schedule", { state: { scheduleData: lastSchedule } }); }}
+            <button onClick={() => { setShowSuccessModal(null); navigate("/view-schedule", { state: { scheduleData: lastSchedule, selectedSubjects: SUBJECTS.filter(s => checked[s.key]).map(s => s.key) } }); }}
               style={{ background: "#2C1810", color: "white", border: "none", padding: "13px 40px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
               View Schedule
             </button>
@@ -365,5 +363,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
 
 

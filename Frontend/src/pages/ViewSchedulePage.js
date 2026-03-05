@@ -21,11 +21,12 @@ export default function ViewSchedulePage() {
     setLoading(true);
     try {
       const stateData = location.state?.scheduleData;
+      const selectedSubjects = location.state?.selectedSubjects || null;
       if (stateData) {
         setSchedule(stateData.schedule || []);
         setPriorities(stateData.subject_priorities || []);
       } else {
-        const res = await generateSchedule(user.username, 0);
+        const res = await generateSchedule(user.username, 0, selectedSubjects);
         const data = res.data.data;
         setSchedule(data.schedule || []);
         setPriorities(data.subject_priorities || []);
@@ -188,6 +189,7 @@ export default function ViewSchedulePage() {
     </div>
   );
 }
+
 
 
 
