@@ -166,7 +166,15 @@ export default function ViewSchedulePage() {
           </>
         )}
 
-        {!loading && schedule.length === 0 && (
+        {showPrev && !prevSchedule && (
+          <div style={{ textAlign: "center", padding: "80px 0" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>📅</div>
+            <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>No Previous Week Found</h3>
+            <p style={{ fontSize: "14px", color: "#8C7B70" }}>This appears to be your first time using the planner. Generate a schedule this week and it will appear here next week!</p>
+          </div>
+        )}
+
+        {!loading && !showPrev && schedule.length === 0 && (
           <div style={{ textAlign: "center", padding: "80px 0" }}>
             <p style={{ fontSize: "16px", color: "#8C7B70", marginBottom: "20px" }}>No schedule found. Go back and generate one!</p>
             <button onClick={() => navigate("/dashboard")}
@@ -180,5 +188,6 @@ export default function ViewSchedulePage() {
     </div>
   );
 }
+
 
 

@@ -1,4 +1,4 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const API = axios.create({
   baseURL: "https://smart-planner-backend.onrender.com/api",
@@ -42,3 +42,4 @@ export const healthCheck    = () => API.get("/health");
 
 export const saveSchedule = (user_id, schedule_data) => API.post("/schedule/save", { user_id, schedule_data });
 export const getPreviousSchedule = (user_id) => API.get("/schedule/previous/" + user_id);
+
