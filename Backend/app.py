@@ -20,7 +20,7 @@ from historic_priority_engine.historic_priority_engine import run_historic_prior
 from task_priority_engine.task_priority_engine import run_task_priority_engine
 from scheduler_engine.scheduler_engine import run_scheduler
 from user_credentials_db import register_user, authenticate_user
-from user_coverage_db import upsert_coverage, get_coverage_for_user
+from user_coverage_db import upsert_coverage, get_coverage_for_user, delete_coverage
 from user_availability_db import upsert_availability, get_availability_for_user, clear_availability
 from user_tasks_db import add_task, get_tasks_for_user, delete_task
 from user_session_db import check_and_update_session
@@ -79,6 +79,11 @@ def save_coverage():
         _require(body, "user_id", "coverage")
         uid = body["user_id"]
         saved = []
+        existing = get_coverage_for_user(uid)
+        existing_subjects = {r["subject"] for r in existing}
+        new_subjects = set(body["coverage"].keys())
+        for old_subject in existing_subjects - new_subjects:
+            delete_coverage(uid, old_subject)
         for subject, pct in body["coverage"].items():
             r = upsert_coverage(uid, subject, float(pct))
             saved.append({"subject":r.subject,"coverage_percentage":r.coverage_percentage})
@@ -213,6 +218,7 @@ def get_previous_schedule_route(user_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
+
 
 
 
