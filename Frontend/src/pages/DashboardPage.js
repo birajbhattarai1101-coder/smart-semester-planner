@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [lastSchedule, setLastSchedule] = useState(null);
   const [checked, setChecked] = useState(Object.fromEntries(SUBJECTS.map(s => [s.key, false])));
   const [hours, setHours] = useState(Object.fromEntries(DAYS.map(d => [d, 0])));
+  const [hoursWarning, setHoursWarning] = useState("");
   const [tasks, setTasks] = useState([]);
   const [showHoursModal, setShowHoursModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(null);
@@ -273,12 +274,13 @@ export default function DashboardPage() {
                 <span style={{ fontSize: "14px", fontWeight: 600, color: "#2C1810" }}>{day}</span>
                 <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={"hr_" + day} autoComplete="off"
                   value={hours[day] === 0 ? "" : hours[day]}
-                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setHours(p => ({ ...p, [day]: v === "" ? 0 : Math.min(12, Number(v)) })); }}
+                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); const n = v === "" ? 0 : Number(v); if (n > 8) { setHoursWarning(day); } else { setHoursWarning(""); } setHours(p => ({ ...p, [day]: Math.min(8, n) })); }}
                   onKeyDown={e => { if (e.key === "Enter") { const idx = DAYS.indexOf(day); if (idx < DAYS.length - 1) { document.getElementById("hr_" + DAYS[idx + 1])?.focus(); } else { document.getElementById("saveHoursBtn")?.click(); } } }}
-                  style={{ width: "68px", textAlign: "center", padding: "8px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
+                  style={{ width: "68px", textAlign: "center", padding: "8px", border: hoursWarning === day ? "1.5px solid #DC2626" : "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: hoursWarning === day ? "#DC2626" : "#2C1810", fontFamily: "inherit", outline: "none" }} />
               </div>
             ))}
-            <p style={{ textAlign: "center", fontSize: "14px", fontWeight: 700, color: "#2C1810", margin: "16px 0" }}>Total Weekly Hours: {totalHours}hr</p>
+            {hoursWarning && <p style={{ textAlign: "center", fontSize: "12px", color: "#DC2626", margin: "8px 0 0", fontWeight: 600 }}>⚠️ Maximum 8 hours per day allowed!</p>}
+            <p style={{ textAlign: "center", fontSize: "14px", fontWeight: 700, color: "#2C1810", margin: "8px 0 16px" }}>Total Weekly Hours: {totalHours}hr</p>
             <button id="saveHoursBtn" onClick={handleSaveHours}
               style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "14px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
               Save Hours
@@ -359,3 +361,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
