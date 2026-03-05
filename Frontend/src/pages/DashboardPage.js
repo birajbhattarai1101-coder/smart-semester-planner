@@ -58,23 +58,27 @@ export default function DashboardPage() {
       if (savedChecked) setChecked(JSON.parse(savedChecked));
       if (savedCoverage) setCoverage(JSON.parse(savedCoverage));
     } catch {}
-    // Then sync from backend (source of truth)
-    try {
-      const res = await getCoverage(uname);
-      const rows = res.data.data.coverage || [];
-      if (rows.length > 0) {
-        const loadedCoverage = Object.fromEntries(rows.map(r => [r.subject, r.coverage_percentage || 0]));
-        setCoverage(loadedCoverage);
-        localStorage.setItem("sf_coverage_" + uname, JSON.stringify(loadedCoverage));
-        // Only infer checked from backend if no localStorage exists
-        const storedChecked = localStorage.getItem("sf_checked_" + uname);
-        if (!storedChecked) {
-          const inferredChecked = Object.fromEntries(SUBJECTS.map(s => [s.key, rows.some(r => r.subject === s.key)]));
-          setChecked(inferredChecked);
-          localStorage.setItem("sf_checked_" + uname, JSON.stringify(inferredChecked));
+    // Sync from backend only if no localStorage exists (localStorage is source of truth)
+    const storedChecked = localStorage.getItem("sf_checked_" + uname);
+    const storedCoverage = localStorage.getItem("sf_coverage_" + uname);
+    if (!storedChecked || !storedCoverage) {
+      try {
+        const res = await getCoverage(uname);
+        const rows = res.data.data.coverage || [];
+        if (rows.length > 0) {
+          if (!storedCoverage) {
+            const loadedCoverage = Object.fromEntries(rows.map(r => [r.subject, r.coverage_percentage || 0]));
+            setCoverage(loadedCoverage);
+            localStorage.setItem("sf_coverage_" + uname, JSON.stringify(loadedCoverage));
+          }
+          if (!storedChecked) {
+            const inferredChecked = Object.fromEntries(SUBJECTS.map(s => [s.key, rows.some(r => r.subject === s.key)]));
+            setChecked(inferredChecked);
+            localStorage.setItem("sf_checked_" + uname, JSON.stringify(inferredChecked));
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
   };
 
   const fetchTasks = async () => {
@@ -361,4 +365,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
