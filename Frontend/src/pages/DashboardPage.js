@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, getAvailability, getCoverage, generateSchedule, saveSchedule } from "../api/planner";
+import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, getAvailability, generateSchedule, saveSchedule } from "../api/planner";
 
 const SUBJECTS = [
   { key: "AI", label: "Artificial Intelligence(AI)" },
@@ -47,24 +47,12 @@ export default function DashboardPage() {
   const [taskForm, setTaskForm]               = useState({ task_name: "", difficulty: "Medium", deadline: "" });
   const [generating, setGenerating]           = useState(false);
   const [error, setError]                     = useState("");
+  const [hoursError, setHoursError]           = useState("");
 
-  useEffect(() => { fetchTasks(); fetchCoverage(); }, []);
+  useEffect(() => { fetchTasks(); }, []);
 
   const fetchTasks = async () => {
     try { const res = await getTasks(user.username); setTasks(res.data.data.tasks || []); } catch {}
-  };
-
-  const fetchCoverage = async () => {
-    try {
-      const res = await getCoverage(user.username);
-      const rows = res.data.data.coverage || [];
-      if (rows.length > 0) {
-        const loadedCoverage = Object.fromEntries(rows.map(r => [r.subject, r.coverage_percentage || 0]));
-        const loadedChecked = Object.fromEntries(SUBJECTS.map(s => [s.key, rows.some(r => r.subject === s.key && r.coverage_percentage > 0)]));
-        setCoverage(prev => ({ ...prev, ...loadedCoverage }));
-        setChecked(prev => ({ ...prev, ...loadedChecked }));
-      }
-    } catch {}
   };
 
   const openHoursModal = async () => {
@@ -76,10 +64,17 @@ export default function DashboardPage() {
         setHours(loaded);
       }
     } catch {}
+    setHoursError("");
     setShowHoursModal(true);
   };
 
   const handleSaveHours = async () => {
+    const filledDays = Object.values(hours).filter(v => v > 0).length;
+    if (filledDays < 5) {
+      setHoursError("Please enter study hours for at least 5 days.");
+      return;
+    }
+    setHoursError("");
     try {
       await saveAvailability(user.username, DAYS.map((d, i) => ({ day_label: "Day"+(i+1), available_hours: hours[d] })));
       setShowHoursModal(false);
@@ -150,7 +145,7 @@ export default function DashboardPage() {
                     <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#8C7B70" }}>{col.sub}</p>
                   </div>
                 </div>
-                <div style={{ width: "36px", height: "36px", background: "#2C1810", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "20px", flexShrink: 0 }}>+</div>
+                <div style={{ width: "36px", height: "36px", background: "#2C1810", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", alignSelf: "center", color: "white", fontSize: "20px", flexShrink: 0 }}>+</div>
               </div>
               {col.items.map((t, i) => (
                 <div key={t.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 24px", background: i % 2 === 0 ? "#FAFAF8" : "white", borderTop: "1px solid #F0EBE3" }}>
@@ -197,6 +192,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
+      {/* Returning User Modal */}
       {showReturningModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }}>
           <div style={{ background: "white", borderRadius: "20px", padding: "40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)", textAlign: "center" }}>
@@ -225,33 +221,40 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Hours Modal */}
       {showHoursModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowHoursModal(false)}>
-          <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "400px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ textAlign: "center", marginBottom: "28px" }}>
-              <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: "28px", color: "#B8862E", marginBottom: "12px", display: "block" }} />
-              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "4px" }}>Weekly Study Plan</h3>
-              <p style={{ fontSize: "13px", color: "#8C7B70", margin: 0 }}>Enter hours for the next 7 days</p>
+          <div style={{ background: "white", borderRadius: "20px", padding: "24px 32px", width: "380px", maxWidth: "90vw", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+              <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: "24px", color: "#B8862E", marginBottom: "10px", display: "block" }} />
+              <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#2C1810", marginBottom: "2px" }}>Weekly Study Plan</h3>
+              <p style={{ fontSize: "12px", color: "#8C7B70", margin: 0 }}>Enter hours for the next 7 days (max 8h/day)</p>
             </div>
             {DAYS.map(day => (
-              <div key={day} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+              <div key={day} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
                 <span style={{ fontSize: "14px", fontWeight: 600, color: "#2C1810" }}>{day}</span>
                 <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={"hr_" + day} autoComplete="off"
                   value={hours[day] === 0 ? "" : hours[day]}
-                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setHours(p => ({ ...p, [day]: v === "" ? 0 : Math.min(12, Number(v)) })); }}
+                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ""); setHours(p => ({ ...p, [day]: v === "" ? 0 : Math.min(8, Number(v)) })); }}
                   onKeyDown={e => { if (e.key === "Enter") { const idx = DAYS.indexOf(day); if (idx < DAYS.length - 1) { document.getElementById("hr_" + DAYS[idx + 1])?.focus(); } else { document.getElementById("saveHoursBtn")?.click(); } } }}
-                  style={{ width: "68px", textAlign: "center", padding: "8px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
+                  style={{ width: "64px", textAlign: "center", padding: "7px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#2C1810", fontFamily: "inherit", outline: "none" }} />
               </div>
             ))}
-            <p style={{ textAlign: "center", fontSize: "14px", fontWeight: 700, color: "#2C1810", margin: "16px 0" }}>Total Weekly Hours: {totalHours}hr</p>
+            {hoursError && (
+              <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "8px 12px", fontSize: "12px", color: "#DC2626", marginBottom: "10px", textAlign: "center" }}>
+                {hoursError}
+              </div>
+            )}
+            <p style={{ textAlign: "center", fontSize: "13px", fontWeight: 700, color: "#2C1810", margin: "12px 0" }}>Total Weekly Hours: {totalHours}hr</p>
             <button id="saveHoursBtn" onClick={handleSaveHours}
-              style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "14px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "13px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
               Save Hours
             </button>
           </div>
         </div>
       )}
 
+      {/* Add Task Modal */}
       {showTaskModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowTaskModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
@@ -294,6 +297,7 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Success Modal */}
       {showSuccessModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowSuccessModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "44px 40px", width: "360px", maxWidth: "90vw", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
@@ -314,4 +318,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
