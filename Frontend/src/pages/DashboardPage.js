@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, getAvailability, generateSchedule, saveSchedule } from "../api/planner";
+import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, getAvailability, getCoverage, generateSchedule, saveSchedule } from "../api/planner";
 
 const SUBJECTS = [
   { key: "AI", label: "Artificial Intelligence(AI)" },
@@ -48,10 +48,23 @@ export default function DashboardPage() {
   const [generating, setGenerating]           = useState(false);
   const [error, setError]                     = useState("");
 
-  useEffect(() => { fetchTasks(); }, []);
+  useEffect(() => { fetchTasks(); fetchCoverage(); }, []);
 
   const fetchTasks = async () => {
     try { const res = await getTasks(user.username); setTasks(res.data.data.tasks || []); } catch {}
+  };
+
+  const fetchCoverage = async () => {
+    try {
+      const res = await getCoverage(user.username);
+      const rows = res.data.data.coverage || [];
+      if (rows.length > 0) {
+        const loadedCoverage = Object.fromEntries(rows.map(r => [r.subject, r.coverage_percentage || 0]));
+        const loadedChecked = Object.fromEntries(SUBJECTS.map(s => [s.key, rows.some(r => r.subject === s.key && r.coverage_percentage > 0)]));
+        setCoverage(prev => ({ ...prev, ...loadedCoverage }));
+        setChecked(prev => ({ ...prev, ...loadedChecked }));
+      }
+    } catch {}
   };
 
   const openHoursModal = async () => {
@@ -301,3 +314,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
