@@ -21,7 +21,7 @@ export default function ViewSchedulePage() {
     setLoading(true);
     try {
       const stateData = location.state?.scheduleData;
-      const selectedSubjects = location.state?.selectedSubjects || null;
+      const selectedSubjects = location.state?.selectedSubjects || JSON.parse(localStorage.getItem("sf_selected_" + user.username) || "null");
       if (stateData) {
         setSchedule(stateData.schedule || []);
         setPriorities(stateData.subject_priorities || []);
@@ -189,6 +189,7 @@ export default function ViewSchedulePage() {
     </div>
   );
 }
+
 
 
 

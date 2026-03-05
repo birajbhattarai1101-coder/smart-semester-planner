@@ -141,7 +141,7 @@ export default function DashboardPage() {
   };
 
   const handleGenerate = async () => {
-    const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key); console.log("CHECKED STATE:", JSON.stringify(checked)); console.log("SELECTED KEYS:", JSON.stringify(selectedKeys));
+    const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key); localStorage.setItem("sf_selected_" + user.username, JSON.stringify(selectedKeys));
     if (selectedKeys.length === 0) { alert("Please select at least one subject."); return; }
     setGenerating(true); setError("");
     try {
@@ -363,6 +363,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
 
 
