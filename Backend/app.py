@@ -169,6 +169,8 @@ def generate_schedule():
             coverage_raw = {r["subject"]:r["coverage_percentage"] for r in rows}
         if not coverage_raw: return _err("coverage is required.")
         selected_subjects = body.get("selected_subjects") or None
+        print(f"DEBUG selected_subjects: {selected_subjects}", flush=True)
+        print(f"DEBUG coverage_raw before filter: {list(coverage_raw.keys())}", flush=True)
         if selected_subjects:
             coverage_raw = {k: v for k, v in coverage_raw.items() if k in selected_subjects}
         subject_priorities = run_historic_priority_engine(coverage_raw)
@@ -218,6 +220,7 @@ def get_previous_schedule_route(user_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
+
 
 
 
