@@ -20,8 +20,8 @@ export const getAvailability  = (user_id) => API.get(`/availability/${user_id}`)
 export const addTask          = (taskData) => API.post("/tasks", taskData);
 export const getTasks         = (user_id) => API.get(`/tasks/${user_id}`);
 export const deleteTask       = (task_id) => API.delete(`/tasks/${task_id}`);
-export const generateSchedule = (user_id, start_offset_days = 0) =>
-  API.post("/schedule", { user_id, start_offset_days });
+export const generateSchedule = (user_id, start_offset_days = 0, selected_subjects = null) =>
+  API.post("/schedule", { user_id, start_offset_days, ...(selected_subjects ? { selected_subjects } : {}) });
 
 export const notifyDeadline = (user_id) =>
   API.post("/notify/deadline", { user_id });
@@ -42,6 +42,7 @@ export const healthCheck    = () => API.get("/health");
 
 export const saveSchedule = (user_id, schedule_data) => API.post("/schedule/save", { user_id, schedule_data });
 export const getPreviousSchedule = (user_id) => API.get("/schedule/previous/" + user_id);
+
 
 
 
