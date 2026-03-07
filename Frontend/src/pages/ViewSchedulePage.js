@@ -154,7 +154,7 @@ export default function ViewSchedulePage() {
                             </span>
                           </td>
                           <td style={{ padding: "11px 16px", fontSize: "13px", color: "#6B5A4E" }}>{row.subject}</td>
-                          <td style={{ padding: "11px 16px", fontSize: "13px", fontWeight: 700, color: "#B8862E" }}>{row.allocated_hours}h</td>
+                          <td style={{ padding: "11px 16px", fontSize: "13px", fontWeight: 700, color: "#B8862E" }}>{row.allocated_hours >= 1 ? row.allocated_hours + "h" : Math.round(row.allocated_hours * 60) + " mins"}</td>
                           <td style={{ padding: "11px 16px", fontSize: "13px", color: "#6B5A4E" }}>{row.deadline || "-"}</td>
                           <td style={{ padding: "11px 16px", fontSize: "12px", fontWeight: 700, color: prColor(row.urgency_label) }}>{row.urgency_label || "-"}</td>
                         </tr>
