@@ -106,7 +106,7 @@ export default function DashboardPage() {
       const res = await getAvailability(user.username);
       const saved = res.data.data.availability || [];
       if (saved.length > 0) {
-        const loaded = Object.fromEntries(DAYS.map((d, i) => [d, saved[i]?.available_hours || 0]));
+        const loaded = Object.fromEntries(DAYS.map((d) => [d, saved.find(s => s.day_label === d)?.available_hours || 0]));
         setHours(loaded);
       }
     } catch {}
@@ -115,7 +115,7 @@ export default function DashboardPage() {
 
   const handleSaveHours = async () => {
     try {
-      await saveAvailability(user.username, DAYS.map((d, i) => ({ day_label: "Day"+(i+1), available_hours: hours[d] })));
+      await saveAvailability(user.username, DAYS.map((d) => ({ day_label: d, available_hours: hours[d] })));
       setShowHoursModal(false);
       setShowSuccessModal("hours");
     } catch {}
@@ -240,7 +240,7 @@ export default function DashboardPage() {
           <div style={{ background: "white", borderRadius: "20px", padding: "40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)", textAlign: "center" }}>
             {returningStep === 1 ? (
               <>
-                <div style={{ fontSize: "40px", marginBottom: "16px" }}>👋</div>
+                <div style={{ fontSize: "40px", marginBottom: "16px" }}>??</div>
                 <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>Welcome back!</h2>
                 <p style={{ fontSize: "14px", color: "#8C7B70", marginBottom: "32px" }}>Any changes to your available hours this week?</p>
                 <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
@@ -250,7 +250,7 @@ export default function DashboardPage() {
               </>
             ) : (
               <>
-                <div style={{ fontSize: "40px", marginBottom: "16px" }}>📋</div>
+                <div style={{ fontSize: "40px", marginBottom: "16px" }}>??</div>
                 <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "8px" }}>Any task modifications?</h2>
                 <p style={{ fontSize: "14px", color: "#8C7B70", marginBottom: "32px" }}>Do you want to add or edit assignments, labs or subjects?</p>
                 <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
@@ -281,7 +281,7 @@ export default function DashboardPage() {
                   style={{ width: "68px", textAlign: "center", padding: "8px", border: hoursWarning === day ? "1.5px solid #DC2626" : "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: hoursWarning === day ? "#DC2626" : "#2C1810", fontFamily: "inherit", outline: "none" }} />
               </div>
             ))}
-            {hoursWarning && <p style={{ textAlign: "center", fontSize: "12px", color: "#DC2626", margin: "8px 0 0", fontWeight: 600 }}>⚠️ Maximum 8 hours per day allowed!</p>}
+            {hoursWarning && <p style={{ textAlign: "center", fontSize: "12px", color: "#DC2626", margin: "8px 0 0", fontWeight: 600 }}>?? Maximum 8 hours per day allowed!</p>}
             <p style={{ textAlign: "center", fontSize: "14px", fontWeight: 700, color: "#2C1810", margin: "8px 0 16px" }}>Total Weekly Hours: {totalHours}hr</p>
             <button id="saveHoursBtn" onClick={handleSaveHours}
               style={{ width: "100%", background: "#B8862E", color: "white", border: "none", padding: "14px", borderRadius: "8px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
@@ -336,7 +336,7 @@ export default function DashboardPage() {
       {showSuccessModal === "hours" && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowSuccessModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "44px 40px", width: "360px", maxWidth: "90vw", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>✓</div>
+            <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>?</div>
             <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#2C1810", marginBottom: "10px" }}>Hours Saved!</h3>
             <p style={{ fontSize: "13px", color: "#8C7B70", marginBottom: "28px", lineHeight: 1.7 }}>Your weekly study capacity has been updated.</p>
             <button onClick={() => setShowSuccessModal(null)}
@@ -350,7 +350,7 @@ export default function DashboardPage() {
       {showSuccessModal === "schedule" && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowSuccessModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "44px 40px", width: "360px", maxWidth: "90vw", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>✓</div>
+            <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>?</div>
             <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#2C1810", marginBottom: "10px" }}>Schedule Ready!</h3>
             <p style={{ fontSize: "13px", color: "#8C7B70", marginBottom: "28px", lineHeight: 1.7 }}>Your weekly plan has been optimized successfully.</p>
             <button onClick={() => { setShowSuccessModal(null); navigate("/view-schedule", { state: { scheduleData: lastSchedule, selectedSubjects: SUBJECTS.filter(s => checked[s.key]).map(s => s.key) } }); }}
