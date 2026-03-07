@@ -65,9 +65,11 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
                         if t["hours_remaining"] <= 0.01:
                             break
                         give = min(t["hours_remaining"], day_remaining[i])
-                        if give < 0.05:
-                            continue
-                        schedule_rows.append({
+                        if give < 1.0 and t["urgency_label"] not in ("CRITICAL", "HIGH"):
+                        continue
+                    if give < 0.05:
+                        continue
+                    schedule_rows.append({
                             "day": slot["day_label"], "date": str(slot["date"]),
                             "task_type": t["task_type"],
                             "subject": t.get("subject", t["task_name"]),
@@ -83,9 +85,11 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
                         if t["hours_remaining"] <= 0.01:
                             break
                         give = min(t["hours_remaining"], day_remaining[i])
-                        if give < 0.05:
-                            continue
-                        schedule_rows.append({
+                        if give < 1.0 and t["urgency_label"] not in ("CRITICAL", "HIGH"):
+                        continue
+                    if give < 0.05:
+                        continue
+                    schedule_rows.append({
                             "day": slot["day_label"], "date": str(slot["date"]),
                             "task_type": t["task_type"],
                             "subject": t.get("subject", t["task_name"]),
@@ -103,6 +107,8 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
                     day_orig = slot["available_hours"]
                     daily_cap = round(day_orig * cap_ratio, 4)
                     give = min(t["hours_remaining"], day_remaining[i], daily_cap)
+                    if give < 1.0 and t["urgency_label"] not in ("CRITICAL", "HIGH"):
+                        continue
                     if give < 0.05:
                         continue
                     schedule_rows.append({

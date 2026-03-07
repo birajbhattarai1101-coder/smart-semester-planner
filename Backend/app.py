@@ -174,6 +174,8 @@ def generate_schedule():
         if selected_subjects:
             coverage_raw = {k: v for k, v in coverage_raw.items() if k in selected_subjects}
         subject_priorities = run_historic_priority_engine(coverage_raw)
+        if selected_subjects:
+            subject_priorities = [p for p in subject_priorities if p["subject"] in selected_subjects]
         today = datetime.date.today()
         db_tasks = []
         if uid:

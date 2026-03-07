@@ -141,7 +141,7 @@ export default function DashboardPage() {
   };
 
   const handleGenerate = async () => {
-    const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key); localStorage.setItem("sf_selected_" + user.username, JSON.stringify(selectedKeys)); const uncheckedKeys = SUBJECTS.filter(s => !checked[s.key]).map(s => s.key);
+    const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key); localStorage.setItem("sf_selected_" + user.username, JSON.stringify(selectedKeys)); const uncheckedKeys = SUBJECTS.filter(s => !checked[s.key]).map(s => s.key); if (uncheckedKeys.length > 0) { try { await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k] || 0]))); } catch {} }
     if (selectedKeys.length === 0) { alert("Please select at least one subject."); return; }
     setGenerating(true); setError("");
     try {
@@ -264,7 +264,7 @@ export default function DashboardPage() {
       )}
 
       {showHoursModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowHoursModal(false)}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", isolation: "isolate", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowHoursModal(false)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "400px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
             <div style={{ textAlign: "center", marginBottom: "28px" }}>
               <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: "28px", color: "#B8862E", marginBottom: "12px", display: "block" }} />
