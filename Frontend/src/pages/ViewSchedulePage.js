@@ -52,6 +52,7 @@ export default function ViewSchedulePage() {
   const assignH = schedule.filter(r => r.task_type === "Assignment").reduce((s, r) => s + r.allocated_hours, 0).toFixed(1);
   const labH    = schedule.filter(r => r.task_type === "Lab").reduce((s, r) => s + r.allocated_hours, 0).toFixed(1);
   const studyH  = schedule.filter(r => r.task_type === "Study").reduce((s, r) => s + r.allocated_hours, 0).toFixed(1);
+  const fmtH = h => { const hrs = Math.floor(h); const mins = Math.round((h - hrs) * 60); if (hrs === 0) return mins + " mins"; if (mins === 0) return hrs + "h"; return hrs + "h " + mins + " mins"; };
   const prColor = l => l === "HIGH" || l === "CRITICAL" ? "#DC2626" : l === "MEDIUM" ? "#B45309" : "#15803D";
 
   return (
@@ -81,7 +82,7 @@ export default function ViewSchedulePage() {
         {!loading && schedule.length > 0 && (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px", marginBottom: "20px" }}>
-              {[{ label: "Total Hours", value: totalH+"h" }, { label: "Assignments", value: assignH+"h" }, { label: "Labs", value: labH+"h" }, { label: "Study", value: studyH+"h" }].map(stat => (
+              {[{ label: "Total Hours", value: fmtH(parseFloat(totalH)) }, { label: "Assignments", value: fmtH(parseFloat(assignH)) }, { label: "Labs", value: fmtH(parseFloat(labH)) }, { label: "Study", value: fmtH(parseFloat(studyH)) }].map(stat => (
                 <div key={stat.label} style={{ background: "white", borderRadius: "14px", padding: "20px", border: "1px solid #EEE9E0", textAlign: "center" }}>
                   <p style={{ fontSize: "30px", fontWeight: 800, color: "#2C1810", margin: "0 0 4px" }}>{stat.value}</p>
                   <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "#8C7B70", margin: 0 }}>{stat.label}</p>
@@ -134,7 +135,7 @@ export default function ViewSchedulePage() {
                 <div key={day} style={{ background: "white", borderRadius: "16px", border: "1px solid #EEE9E0", overflow: "hidden", marginBottom: "16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 24px", background: "#2C1810" }}>
                     <h4 style={{ color: "white", fontSize: "14px", fontWeight: 700, margin: 0 }}>{day}</h4>
-                    <span style={{ color: "#B8862E", fontSize: "13px", fontWeight: 700 }}>{dayTotal}h total</span>
+                    <span style={{ color: "#B8862E", fontSize: "13px", fontWeight: 700 }}>{fmtH(parseFloat(dayTotal))} total</span>
                   </div>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
@@ -154,7 +155,7 @@ export default function ViewSchedulePage() {
                             </span>
                           </td>
                           <td style={{ padding: "11px 16px", fontSize: "13px", color: "#6B5A4E" }}>{row.subject}</td>
-                          <td style={{ padding: "11px 16px", fontSize: "13px", fontWeight: 700, color: "#B8862E" }}>{(() => { const h = Math.floor(row.allocated_hours); const m = Math.round((row.allocated_hours - h) * 60); if (h === 0) return m + " mins"; if (m === 0) return h + "h"; return h + "h " + m + " mins"; })()}</td>
+                          <td style={{ padding: "11px 16px", fontSize: "13px", fontWeight: 700, color: "#B8862E" }}>{fmtH(row.allocated_hours)}</td>
                           <td style={{ padding: "11px 16px", fontSize: "13px", color: "#6B5A4E" }}>{row.deadline || "-"}</td>
                           <td style={{ padding: "11px 16px", fontSize: "12px", fontWeight: 700, color: prColor(row.urgency_label) }}>{row.urgency_label || "-"}</td>
                         </tr>
@@ -167,6 +168,24 @@ export default function ViewSchedulePage() {
           </>
         )}
 
+        {showPrev && prevSchedule && (() => {
+          const prevGrouped = prevSchedule.reduce((acc, row) => { (acc[row.day] = acc[row.day] || []).push(row); return acc; }, {});
+          return Object.entries(prevGrouped).map(([day, rows]) => {
+            const dayTotal = rows.reduce((s, r) => s + r.allocated_hours, 0);
+            return (
+              <div key={day} style={{ background: "white", borderRadius: "16px", border: "1px solid #EEE9E0", overflow: "hidden", marginBottom: "16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 24px", background: "#4A3728" }}>
+                  <h4 style={{ color: "white", fontSize: "14px", fontWeight: 700, margin: 0 }}>{day}</h4>
+                  <span style={{ color: "#B8862E", fontSize: "13px", fontWeight: 700 }}>{fmtH(dayTotal)} total</span>
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead><tr style={{ background: "#F8F5F0" }}>{["Task","Type","Subject","Hours","Deadline","Priority"].map(h => (<th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "#6B5A4E", borderBottom: "1px solid #EEE9E0" }}>{h}</th>))}</tr></thead>
+                  <tbody>{rows.map((row, ri) => (<tr key={ri} style={{ borderBottom: "1px solid #F5F0EA" }}><td style={{ padding: "11px 16px", fontSize: "13px", fontWeight: 600, color: "#2C1810" }}>{row.task_name}</td><td style={{ padding: "11px 16px" }}><span style={{ padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700, background: row.task_type==="Assignment" ? "#ECFDF5" : row.task_type==="Lab" ? "#EEF2FF" : "#FBF5EC", color: row.task_type==="Assignment" ? "#059669" : row.task_type==="Lab" ? "#4F46E5" : "#B8862E" }}>{row.task_type}</span></td><td style={{ padding: "11px 16px", fontSize: "13px", color: "#6B5A4E" }}>{row.subject}</td><td style={{ padding: "11px 16px", fontSize: "13px", fontWeight: 700, color: "#B8862E" }}>{fmtH(row.allocated_hours)}</td><td style={{ padding: "11px 16px", fontSize: "13px", color: "#6B5A4E" }}>{row.deadline || "-"}</td><td style={{ padding: "11px 16px", fontSize: "12px", fontWeight: 700, color: prColor(row.urgency_label) }}>{row.urgency_label || "-"}</td></tr>))}</tbody>
+                </table>
+              </div>
+            );
+          });
+        })()}
         {showPrev && !prevSchedule && (
           <div style={{ textAlign: "center", padding: "80px 0" }}>
             <div style={{ fontSize: "48px", marginBottom: "16px" }}>📅</div>
