@@ -3,6 +3,7 @@
 URGENCY_OVERRIDE_DAYS = 1
 STUDY_MIN_WEEK = 1.0
 STUDY_MAX_BY_PRIORITY = {"HIGH": 3.0, "MEDIUM": 2.0, "LOW": 1.0}
+URGENCY_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
 
 def _date_labels(start_date, days=7):
     weekday_names = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
@@ -11,8 +12,6 @@ def _date_labels(start_date, days=7):
 
 def _deadline_date(today, days_from_today):
     return today + datetime.timedelta(days=days_from_today)
-
-URGENCY_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
 
 def run_scheduler(availability, task_priorities, subject_priorities, start_offset_days=0):
     today = datetime.date.today()
@@ -24,30 +23,26 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
     day_remaining = [s["available_hours"] for s in day_slots]
     schedule_rows = []
 
-    def _queue(tasks):
-        return [{**t, "hours_remaining": t["hours_required"],
-                 "deadline_date": str(_deadline_date(today, t["deadline_days"]))} for t in tasks]
+    def _deadline_date_str(days):
+        return str(today + datetime.timedelta(days=days))
 
-    # Sort all tasks together by urgency first, then priority score
-    # CRITICAL lab beats HIGH assignment
-    all_tasks = sorted(
-        [t for t in task_priorities],
-        key=lambda x: (URGENCY_ORDER.get(x["urgency_label"], 3), -x["priority_score"])
-    )
-    # Split into assignments and labs after urgency sort
-    assignments = _queue([t for t in all_tasks if t["task_type"] == "Assignment"])
-    labs = _queue([t for t in all_tasks if t["task_type"] == "Lab"])
-
-    # Merge into single queue respecting urgency order
-    task_queue = _queue(sorted(
+    # Sort all tasks by urgency first, then priority score descending
+    task_queue = sorted(
         task_priorities,
         key=lambda x: (URGENCY_ORDER.get(x["urgency_label"], 3), -x["priority_score"])
-    ))
+    )
+
+    # Build queue with hours_remaining
+    task_queue = [{**t, "hours_remaining": t["hours_required"],
+                   "deadline_date": _deadline_date_str(t["deadline_days"])} for t in task_queue]
+
+    cap_map = {"Assignment": 0.45, "Lab": 0.25}
 
     def schedule_tasks(queue):
         for t in queue:
             days_left = t["deadline_days"]
-            cap_ratio = 0.45 if t["task_type"] == "Assignment" else 0.25
+            cap_ratio = cap_map.get(t["task_type"], 0.45)
+            is_critical = t["urgency_label"] in ("CRITICAL", "HIGH")
 
             eligible = [(i, day_slots[i], day_remaining[i])
                         for i in range(7)
@@ -57,57 +52,37 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
                 continue
 
             if days_left <= URGENCY_OVERRIDE_DAYS:
-                # CRITICAL: dump all into today, warn if not enough
+                # CRITICAL/urgent: dump into earliest available days
                 total_avail = sum(r for _, _, r in eligible)
-                if total_avail < t["hours_remaining"]:
-                    # Not enough hours — allocate what we have and add warning row
-                    for i, slot, cap in eligible:
-                        if t["hours_remaining"] <= 0.01:
-                            break
-                        give = min(t["hours_remaining"], day_remaining[i])
-                        if give < 1.0 and t["urgency_label"] not in ("CRITICAL", "HIGH"):
-                        continue
+                not_enough = total_avail < t["hours_remaining"]
+                for i, slot, _ in eligible:
+                    if t["hours_remaining"] <= 0.01:
+                        break
+                    give = min(t["hours_remaining"], day_remaining[i])
                     if give < 0.05:
                         continue
+                    label = t["task_name"] + (" ⚠️ NOT ENOUGH HOURS" if not_enough else "")
                     schedule_rows.append({
-                            "day": slot["day_label"], "date": str(slot["date"]),
-                            "task_type": t["task_type"],
-                            "subject": t.get("subject", t["task_name"]),
-                            "task_name": t["task_name"] + " ⚠️ NOT ENOUGH HOURS",
-                            "allocated_hours": round(give, 2),
-                            "deadline": t["deadline_date"],
-                            "urgency_label": t["urgency_label"]
-                        })
-                        t["hours_remaining"] = round(t["hours_remaining"] - give, 4)
-                        day_remaining[i] = round(day_remaining[i] - give, 4)
-                else:
-                    for i, slot, cap in eligible:
-                        if t["hours_remaining"] <= 0.01:
-                            break
-                        give = min(t["hours_remaining"], day_remaining[i])
-                        if give < 1.0 and t["urgency_label"] not in ("CRITICAL", "HIGH"):
-                        continue
-                    if give < 0.05:
-                        continue
-                    schedule_rows.append({
-                            "day": slot["day_label"], "date": str(slot["date"]),
-                            "task_type": t["task_type"],
-                            "subject": t.get("subject", t["task_name"]),
-                            "task_name": t["task_name"],
-                            "allocated_hours": round(give, 2),
-                            "deadline": t["deadline_date"],
-                            "urgency_label": t["urgency_label"]
-                        })
-                        t["hours_remaining"] = round(t["hours_remaining"] - give, 4)
-                        day_remaining[i] = round(day_remaining[i] - give, 4)
+                        "day": slot["day_label"], "date": str(slot["date"]),
+                        "task_type": t["task_type"],
+                        "subject": t.get("subject", t["task_name"]),
+                        "task_name": label,
+                        "allocated_hours": round(give, 2),
+                        "deadline": t["deadline_date"],
+                        "urgency_label": t["urgency_label"]
+                    })
+                    t["hours_remaining"] = round(t["hours_remaining"] - give, 4)
+                    day_remaining[i] = round(day_remaining[i] - give, 4)
             else:
-                for i, slot, cap in eligible:
+                # Spread across eligible days within cap
+                for i, slot, _ in eligible:
                     if t["hours_remaining"] <= 0.01:
                         break
                     day_orig = slot["available_hours"]
                     daily_cap = round(day_orig * cap_ratio, 4)
                     give = min(t["hours_remaining"], day_remaining[i], daily_cap)
-                    if give < 1.0 and t["urgency_label"] not in ("CRITICAL", "HIGH"):
+                    # Skip sub-1hr blocks unless critical/high
+                    if give < 1.0 and not is_critical:
                         continue
                     if give < 0.05:
                         continue
@@ -125,16 +100,16 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
 
     schedule_tasks(task_queue)
 
-    # ── study budget = whatever is left after tasks ───────────────────────────
+    # Study budget = leftover after tasks
     total_study_budget = round(sum(day_remaining), 2)
-
     if total_study_budget < 1.0 or not subject_priorities:
         return schedule_rows
 
-    # ── assign weekly study hours per subject ─────────────────────────────────
+    # Assign weekly study hours per subject
     study_alloc = {}
     remaining_budget = total_study_budget
 
+    # Step 1: minimum 1hr each
     for s in subject_priorities:
         if remaining_budget >= STUDY_MIN_WEEK:
             study_alloc[s["subject"]] = STUDY_MIN_WEEK
@@ -142,6 +117,7 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
         else:
             study_alloc[s["subject"]] = 0.0
 
+    # Step 2: distribute remainder by priority weight up to max
     if remaining_budget > 0.01:
         total_score = sum(s["priority_score"] for s in subject_priorities) or 1.0
         for s in subject_priorities:
@@ -155,6 +131,7 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
             study_alloc[s["subject"]] = round(current + give, 2)
             remaining_budget = round(remaining_budget - give, 4)
 
+    # Step 3: dump any remaining into highest priority
     if remaining_budget > 0.01:
         for s in sorted(subject_priorities, key=lambda x: x["priority_score"], reverse=True):
             if remaining_budget <= 0.01:
@@ -168,6 +145,7 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
             study_alloc[s["subject"]] = round(current + give, 2)
             remaining_budget = round(remaining_budget - give, 4)
 
+    # Build study queue sorted by priority
     study_queue = sorted(
         [{"subject": s["subject"], "hrs_remaining": study_alloc[s["subject"]],
           "priority_label": s["priority_label"], "task_name": f"Study {s['subject']}"}
@@ -175,12 +153,12 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
         key=lambda x: STUDY_MAX_BY_PRIORITY.get(x["priority_label"], 1.0), reverse=True
     )
 
+    # Spread study across days in 1hr blocks
     for i, slot in enumerate(day_slots):
         if day_remaining[i] < 1.0:
             continue
         day_label = slot["day_label"]
-        day_date  = str(slot["date"])
-
+        day_date = str(slot["date"])
         for sq in study_queue:
             if day_remaining[i] < 1.0:
                 break
