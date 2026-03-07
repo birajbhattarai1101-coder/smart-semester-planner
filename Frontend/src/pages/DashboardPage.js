@@ -264,7 +264,7 @@ export default function DashboardPage() {
       )}
 
       {showHoursModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowHoursModal(false)}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowHoursModal(false)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "400px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
             <div style={{ textAlign: "center", marginBottom: "28px" }}>
               <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: "28px", color: "#B8862E", marginBottom: "12px", display: "block" }} />
