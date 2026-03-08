@@ -79,7 +79,7 @@ export default function ViewSchedulePage() {
           </div>
         )}
 
-        {!loading && schedule.length > 0 && (
+        {!loading && schedule.length > 0 && !showPrev && (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px", marginBottom: "20px" }}>
               {[{ label: "Total Hours", value: fmtH(parseFloat(totalH)) }, { label: "Assignments", value: fmtH(parseFloat(assignH)) }, { label: "Labs", value: fmtH(parseFloat(labH)) }, { label: "Study", value: fmtH(parseFloat(studyH)) }].map(stat => (

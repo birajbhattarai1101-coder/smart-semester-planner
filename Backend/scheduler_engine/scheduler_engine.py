@@ -149,27 +149,27 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
     study_queue = sorted(
         [{"subject": s["subject"], "hrs_remaining": study_alloc[s["subject"]],
           "priority_label": s["priority_label"], "task_name": f"Study {s['subject']}"}
-         for s in subject_priorities if study_alloc.get(s["subject"], 0) >= 1.0],
+         for s in subject_priorities if study_alloc.get(s["subject"], 0) >= 0.05],
         key=lambda x: STUDY_MAX_BY_PRIORITY.get(x["priority_label"], 1.0), reverse=True
     )
 
     # Spread study across days in 1hr blocks
     for i, slot in enumerate(day_slots):
-        if day_remaining[i] < 1.0:
+        if day_remaining[i] < 0.05:
             continue
         day_label = slot["day_label"]
         day_date = str(slot["date"])
         for sq in study_queue:
-            if day_remaining[i] < 1.0:
+            if day_remaining[i] < 0.05:
                 break
-            if sq["hrs_remaining"] < 1.0:
+            if sq["hrs_remaining"] < 0.05:
                 continue
             max_block = STUDY_MAX_BY_PRIORITY.get(sq["priority_label"], 1.0)
             give = min(sq["hrs_remaining"], day_remaining[i], max_block)
-            give = max(1.0, round(give, 2))
+            give = round(give, 2)
             if give > day_remaining[i]:
                 give = round(day_remaining[i], 2)
-            if give < 1.0:
+            if give < 0.05:
                 break
             schedule_rows.append({
                 "day": day_label, "date": day_date, "task_type": "Study",
