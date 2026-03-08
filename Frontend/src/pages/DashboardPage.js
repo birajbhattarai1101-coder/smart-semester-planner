@@ -188,7 +188,7 @@ export default function DashboardPage() {
                     <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#8C7B70" }}>{col.sub}</p>
                   </div>
                 </div>
-                <div style={{ width: "36px", height: "36px", background: "#2C1810", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "20px", flexShrink: 0 }}>+</div>
+                <div style={{ width: "36px", height: "36px", background: "#2C1810", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "20px", flexShrink: 0, lineHeight: "1", paddingBottom: "2px" }}>+</div>
               </div>
               {col.items.map((t, i) => (
                 <div key={t.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 24px", background: i % 2 === 0 ? "#FAFAF8" : "white", borderTop: "1px solid #F0EBE3" }}>
