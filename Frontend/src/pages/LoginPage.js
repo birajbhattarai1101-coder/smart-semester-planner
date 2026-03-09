@@ -82,19 +82,19 @@ export default function LoginPage({ initialMode = "login" }) {
           <form onSubmit={handleSubmit}>
             <div style={rowStyle}>
               <i className="fa-solid fa-user" style={{ color: "#B8862E", fontSize: "16px" }} />
-              <input type="text" placeholder="User Name" value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={inputStyle} />
+              <input type="text" placeholder="User Name" value={username} onChange={e => setUsername(e.target.value)} required autoFocus autoComplete={mode === "login" ? "username" : "off"} style={inputStyle} />
             </div>
 
             {mode === "register" && (
               <div style={rowStyle}>
                 <i className="fa-solid fa-envelope" style={{ color: "#B8862E", fontSize: "16px" }} />
-                <input type="text" placeholder="Email Address" autoComplete="new-password" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+                <input type="text" placeholder="Email Address" autoComplete="off" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
               </div>
             )}
 
             <div style={rowStyle}>
               <i className="fa-solid fa-lock" style={{ color: "#B8862E", fontSize: "16px" }} />
-              <input type={showPass ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={inputStyle} />
+              <input type={showPass ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete={mode === "login" ? "current-password" : "new-password"} style={inputStyle} />
               <button type="button" onClick={() => setShowPass(!showPass)}
                 style={{ background: "none", border: "none", cursor: "pointer", color: "#B8862E", padding: "4px", fontSize: "16px" }}>
                 {showPass ? <i className="fa-solid fa-eye-slash" /> : <i className="fa-solid fa-eye" />}
