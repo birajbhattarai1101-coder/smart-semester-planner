@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, getAvailability, getCoverage, generateSchedule, saveSchedule } from "../api/planner";
@@ -236,7 +236,7 @@ export default function DashboardPage() {
       </div>
 
       {showReturningModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
           <div style={{ background: "white", borderRadius: "20px", padding: "40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)", textAlign: "center" }}>
             {returningStep === 1 ? (
               <>
@@ -292,7 +292,7 @@ export default function DashboardPage() {
       )}
 
       {showTaskModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowTaskModal(null)}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowTaskModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
             <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "24px" }}>
               Add {showTaskModal === "Assignment" ? "Assignment" : "Lab Report"}
@@ -334,7 +334,7 @@ export default function DashboardPage() {
       )}
 
      {showSuccessModal === "hours" && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowSuccessModal(null)}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowSuccessModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "44px 40px", width: "360px", maxWidth: "90vw", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
             <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>
              <i className="fa-solid fa-check" />
@@ -350,7 +350,7 @@ export default function DashboardPage() {
       )}
 
       {showSuccessModal === "schedule" && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }} onClick={() => setShowSuccessModal(null)}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowSuccessModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "44px 40px", width: "360px", maxWidth: "90vw", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
             <div style={{ width: "60px", height: "60px", background: "#B8862E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "24px", color: "white" }}>
               <i className="fa-solid fa-check"></i>
