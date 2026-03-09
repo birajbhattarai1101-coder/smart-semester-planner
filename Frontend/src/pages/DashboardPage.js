@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, getAvailability, getCoverage, generateSchedule, saveSchedule } from "../api/planner";
@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(null);
   const [taskForm, setTaskForm] = useState({ task_name: "", difficulty: "Medium", deadline: "" });
   const [generating, setGenerating] = useState(false);
+  const loginHandled = useRef(false);
   const [error, setError] = useState("");
 
   // Load everything once user is known
@@ -42,11 +43,20 @@ export default function DashboardPage() {
     loadCheckedAndCoverage();
   }, [user]);
 
-  // Handle login status AFTER user and data are loaded
+  // Handle login status AFTER user and data are loaded - fires once per session
   useEffect(() => {
     if (!user?.username) return;
-    if (loginStatus === "new_week") { openHoursModal(); setLoginStatus(null); }
-    else if (loginStatus === "returning") { setShowReturningModal(true); setReturningStep(1); }
+    if (loginHandled.current) return;
+    if (loginStatus === "new_week") {
+      loginHandled.current = true;
+      setLoginStatus(null);
+      openHoursModal();
+    } else if (loginStatus === "returning") {
+      loginHandled.current = true;
+      setLoginStatus(null);
+      setShowReturningModal(true);
+      setReturningStep(1);
+    }
   }, [loginStatus, user]);
 
   const loadCheckedAndCoverage = async () => {
@@ -264,7 +274,7 @@ export default function DashboardPage() {
       )}
 
       {showHoursModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", isolation: "isolate", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowHoursModal(false)}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", isolation: "isolate", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
           <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "400px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
             <div style={{ textAlign: "center", marginBottom: "28px" }}>
               <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: "28px", color: "#B8862E", marginBottom: "12px", display: "block" }} />

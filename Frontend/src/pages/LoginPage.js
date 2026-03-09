@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser, loginUser, loginCheck } from "../api/planner";
 import { useAuth } from "../context/AuthContext";
@@ -88,7 +88,7 @@ export default function LoginPage({ initialMode = "login" }) {
             {mode === "register" && (
               <div style={rowStyle}>
                 <i className="fa-solid fa-envelope" style={{ color: "#B8862E", fontSize: "16px" }} />
-                <input type="email" placeholder="Email Address" autoComplete="off" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+                <input type="text" placeholder="Email Address" autoComplete="new-password" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
               </div>
             )}
 
