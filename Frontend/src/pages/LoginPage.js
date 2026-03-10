@@ -32,7 +32,7 @@ export default function LoginPage({ initialMode = "login" }) {
         navigate("/dashboard");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      setError(err.code === "ECONNABORTED" ? "Server is waking up, please try again in 10 seconds..." : err.response?.data?.message || "Something went wrong.");
     } finally { setLoading(false); }
   };
 
@@ -119,6 +119,7 @@ export default function LoginPage({ initialMode = "login" }) {
     </div>
   );
 }
+
 
 
 
