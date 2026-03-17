@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser, loginUser, loginCheck } from "../api/planner";
 import { useAuth } from "../context/AuthContext";
@@ -20,6 +20,14 @@ export default function LoginPage({ initialMode = "login" }) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
       const isRegister = mode === "register";
+      if (isRegister && email) {
+        const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        if (!gmailRegex.test(email)) {
+          setError("Please enter a valid @gmail.com email address.");
+          setLoading(false);
+          return;
+        }
+      }
       if (isRegister) await registerUser(username, password, email || undefined);
       await loginUser(username, password);
       if (isRegister) {
@@ -88,7 +96,7 @@ export default function LoginPage({ initialMode = "login" }) {
             {mode === "register" && (
               <div style={rowStyle}>
                 <i className="fa-solid fa-envelope" style={{ color: "#B8862E", fontSize: "16px" }} />
-                <input type="text" placeholder="Email Address" autoComplete="off" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+                <input type="email" placeholder="Email Address (@gmail.com)" required autoComplete="off" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
               </div>
             )}
 
@@ -119,6 +127,7 @@ export default function LoginPage({ initialMode = "login" }) {
     </div>
   );
 }
+
 
 
 
