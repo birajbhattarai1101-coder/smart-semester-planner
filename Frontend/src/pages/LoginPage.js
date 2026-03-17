@@ -96,7 +96,7 @@ export default function LoginPage({ initialMode = "login" }) {
             {mode === "register" && (
               <div style={rowStyle}>
                 <i className="fa-solid fa-envelope" style={{ color: "#B8862E", fontSize: "16px" }} />
-                <input type="email" placeholder="Email Address (@gmail.com)" required autoComplete="off" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+                <input type="text" placeholder="Email Address (@gmail.com)" required autoComplete="off" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
               </div>
             )}
 
@@ -127,6 +127,7 @@ export default function LoginPage({ initialMode = "login" }) {
     </div>
   );
 }
+
 
 
 
