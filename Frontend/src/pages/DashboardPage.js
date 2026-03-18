@@ -32,6 +32,8 @@ export default function DashboardPage() {
   const [showTaskModal, setShowTaskModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(null);
   const [taskForm, setTaskForm] = useState({ task_name: "", difficulty: "Medium", deadline: "" });
+  const [editTask, setEditTask] = useState(null);
+  const [editForm, setEditForm] = useState({ task_name: "", difficulty: "Medium", deadline: "" });
   const [generating, setGenerating] = useState(false);
   const loginHandled = useRef(false);
   const [error, setError] = useState("");
@@ -150,6 +152,16 @@ export default function DashboardPage() {
     try { await deleteTask(id); await fetchTasks(); } catch {}
   };
 
+  const handleEditSave = async () => {
+    if (!editForm.task_name || !editForm.deadline) return;
+    try {
+      const { updateTask } = await import("../api/planner");
+      await updateTask(editTask.id, { task_name: editForm.task_name, difficulty: editForm.difficulty, deadline: editForm.deadline });
+    } catch {}
+    setTasks(prev => prev.map(t => t.id === editTask.id ? { ...t, ...editForm } : t));
+    setEditTask(null);
+  };
+
   const handleGenerate = async () => {
     const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key); localStorage.setItem("sf_selected_" + user.username, JSON.stringify(selectedKeys)); const uncheckedKeys = SUBJECTS.filter(s => !checked[s.key]).map(s => s.key); if (uncheckedKeys.length > 0) { try { await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k] || 0]))); } catch {} }
     if (selectedKeys.length === 0) { alert("Please select at least one subject."); return; }
@@ -205,6 +217,7 @@ export default function DashboardPage() {
                   <span style={{ fontSize: "13px", color: "#2C1810", fontWeight: 600 }}>{t.task_name}</span>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <span style={{ fontSize: "11px", color: "#8C7B70" }}>{t.deadline}</span>
+                    <button onClick={() => { setEditTask(t); setEditForm({ task_name: t.task_name, difficulty: t.difficulty || "Medium", deadline: t.deadline || "" }); }} style={{ background: "none", border: "none", color: "#B8862E", cursor: "pointer", fontSize: "13px", lineHeight: 1, marginRight: "4px" }}>&#9998;</button>
                     <button onClick={() => handleDelete(t.id)} style={{ background: "none", border: "none", color: "#C9A080", cursor: "pointer", fontSize: "14px", lineHeight: 1 }}>x</button>
                   </div>
                 </div>
@@ -343,6 +356,48 @@ export default function DashboardPage() {
         </div>
       )}
 
+     {editTask && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setEditTask(null)}>
+          <div style={{ background: "white", borderRadius: "20px", padding: "36px 40px", width: "420px", maxWidth: "90vw", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: "center", marginBottom: "24px" }}>
+              <i className="fa-solid fa-pen-to-square" style={{ fontSize: "28px", color: "#B8862E", marginBottom: "10px", display: "block" }} />
+              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", margin: 0 }}>Edit any tasks?</h3>
+            </div>
+            <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Task Name</label>
+            <input type="text" value={editForm.task_name} autoComplete="off"
+              onChange={e => setEditForm(p => ({ ...p, task_name: e.target.value }))}
+              style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: "16px" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Difficulty</label>
+                <select value={editForm.difficulty} onChange={e => setEditForm(p => ({ ...p, difficulty: e.target.value }))}
+                  style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", background: "white" }}>
+                  {DIFFS.map(d => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Est. Hours</label>
+                <input readOnly value={(HOURS_MAP[editTask.task_type] || HOURS_MAP["Assignment"])[editForm.difficulty] + "h"}
+                  style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#B8862E", fontWeight: 700, fontFamily: "inherit", background: "#FBF5EC", boxSizing: "border-box" }} />
+              </div>
+            </div>
+            <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Deadline</label>
+            <input type="date" value={editForm.deadline} onChange={e => setEditForm(p => ({ ...p, deadline: e.target.value }))}
+              style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: "24px" }} />
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button onClick={() => setEditTask(null)}
+                style={{ flex: 1, background: "none", border: "1.5px solid #D9CEC4", color: "#2C1810", padding: "12px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                Cancel
+              </button>
+              <button onClick={handleEditSave}
+                style={{ flex: 1, background: "#2C1810", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
      {showSuccessModal === "hours" && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.55)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowSuccessModal(null)}>
           <div style={{ background: "white", borderRadius: "20px", padding: "44px 40px", width: "360px", maxWidth: "90vw", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
@@ -377,6 +432,10 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
+
+
 
 
 
