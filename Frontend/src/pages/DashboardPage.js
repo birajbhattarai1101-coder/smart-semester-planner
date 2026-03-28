@@ -365,7 +365,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Deadline</label>
-            <input type="date" value={taskForm.deadline} onChange={e => setTaskForm(p => ({ ...p, deadline: e.target.value }))}
+            <input type="date" value={taskForm.deadline} min={new Date().toISOString().split("T")[0]} onChange={e => setTaskForm(p => ({ ...p, deadline: e.target.value }))}
               style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: "24px" }} />
             <div style={{ display: "flex", gap: "12px" }}>
               <button onClick={() => setShowTaskModal(null)}
@@ -407,7 +407,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Deadline</label>
-            <input type="date" value={editForm.deadline} onChange={e => setEditForm(p => ({ ...p, deadline: e.target.value }))}
+            <input type="date" value={editForm.deadline} min={new Date().toISOString().split("T")[0]} onChange={e => setEditForm(p => ({ ...p, deadline: e.target.value }))}
               style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: "24px" }} />
             <div style={{ display: "flex", gap: "12px" }}>
               <button onClick={() => setEditTask(null)}
