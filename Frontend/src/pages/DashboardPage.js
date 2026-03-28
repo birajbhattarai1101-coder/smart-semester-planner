@@ -42,8 +42,23 @@ export default function DashboardPage() {
   const [editTask, setEditTask] = useState(null);
   const [editForm, setEditForm] = useState({ task_name: "", difficulty: "Medium", deadline: "" });
   const [generating, setGenerating] = useState(false);
+  const [generateStep, setGenerateStep] = useState(0);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
   const loginHandled = useRef(false);
   const [error, setError] = useState("");
+
+  // Cycle loading messages while generating
+  React.useEffect(() => {
+    if (!generating) return;
+    let i = 0;
+    const interval = setInterval(() => { i = (i + 1) % 4; setGenerateStep(i); }, 2000);
+    return () => clearInterval(interval);
+  }, [generating]);
 
   // Load everything once user is known
   useEffect(() => {
@@ -156,11 +171,13 @@ export default function DashboardPage() {
       setTaskForm({ task_name: "", subject: "", difficulty: "Medium", deadline: "" });
       setShowTaskModal(null);
       await fetchTasks();
-    } catch {}
+      showToast("Task added successfully!");
+    } catch { showToast("Failed to add task.", "error"); }
   };
 
   const handleDelete = async (id) => {
-    try { await deleteTask(id); await fetchTasks(); } catch {}
+    try { await deleteTask(id); await fetchTasks(); showToast("Task deleted."); }
+    catch { showToast("Failed to delete task.", "error"); }
   };
 
   const handleEditSave = async () => {
@@ -182,7 +199,7 @@ export default function DashboardPage() {
   const handleGenerate = async () => {
     const selectedKeys = SUBJECTS.filter(s => checked[s.key]).map(s => s.key); localStorage.setItem("sf_selected_" + user.username, JSON.stringify(selectedKeys)); const uncheckedKeys = SUBJECTS.filter(s => !checked[s.key]).map(s => s.key); if (uncheckedKeys.length > 0) { try { await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k] || 0]))); } catch {} }
     if (selectedKeys.length === 0) { alert("Please select at least one subject."); return; }
-    setGenerating(true); setError("");
+    setGenerating(true); setGenerateStep(0); setError("");
     try {
       await saveCoverage(user.username, Object.fromEntries(selectedKeys.map(k => [k, coverage[k] || 0])));
       const res = await generateSchedule(user.username, 0, selectedKeys);
@@ -420,6 +437,30 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {generating && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 99998, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          <div style={{ textAlign: "center", color: "white" }}>
+            <div style={{ width: "72px", height: "72px", border: "5px solid rgba(184,134,46,0.3)", borderTop: "5px solid #B8862E", borderRadius: "50%", animation: "spin 0.9s linear infinite", margin: "0 auto 28px" }} />
+            <h2 style={{ fontSize: "22px", fontWeight: 800, marginBottom: "12px" }}>Building Your Schedule</h2>
+            <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.65)", marginBottom: "32px" }}>
+              {["Fetching your tasks and availability...", "Analyzing deadlines and priorities...", "Optimizing your weekly plan...", "Almost ready — finalizing schedule..."][generateStep]}
+            </p>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+              {[0,1,2,3].map(i => (
+                <div key={i} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === generateStep ? "#B8862E" : "rgba(255,255,255,0.25)", transition: "background 0.3s" }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{ position: "fixed", bottom: "28px", right: "28px", background: toast.type === "error" ? "#DC2626" : "#2C1810", color: "white", padding: "14px 20px", borderRadius: "10px", fontSize: "13px", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.25)", zIndex: 99999, display: "flex", alignItems: "center", gap: "10px", fontFamily: "'Plus Jakarta Sans', sans-serif", animation: "slideUp 0.3s ease" }}>
+          <span style={{ fontSize: "16px" }}>{toast.type === "error" ? "⚠️" : "✅"}</span>
+          {toast.message}
         </div>
       )}
 
