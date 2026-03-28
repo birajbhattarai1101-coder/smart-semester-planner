@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { addTask, getTasks, deleteTask, saveCoverage, saveAvailability, getAvailability, getCoverage, generateSchedule, saveSchedule } from "../api/planner";
+import { addTask, getTasks, deleteTask, updateTask, saveCoverage, saveAvailability, getAvailability, getCoverage, generateSchedule, saveSchedule } from "../api/planner";
 
 const SUBJECTS = [
   { key: "AI", label: "Artificial Intelligence(AI)" },
@@ -155,10 +155,16 @@ export default function DashboardPage() {
   const handleEditSave = async () => {
     if (!editForm.task_name || !editForm.deadline) return;
     try {
-      const { updateTask } = await import("../api/planner");
-      await updateTask(editTask.id, { task_name: editForm.task_name, difficulty: editForm.difficulty, deadline: editForm.deadline });
-    } catch {}
-    setTasks(prev => prev.map(t => t.id === editTask.id ? { ...t, ...editForm } : t));
+      await updateTask(editTask.id, {
+        task_name: editForm.task_name,
+        difficulty: editForm.difficulty,
+        deadline: editForm.deadline,
+        task_type: editTask.task_type,
+      });
+      await fetchTasks();
+    } catch (err) {
+      console.error("Failed to update task:", err);
+    }
     setEditTask(null);
   };
 

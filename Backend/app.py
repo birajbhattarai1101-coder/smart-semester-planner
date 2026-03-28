@@ -1,4 +1,4 @@
-﻿import sys, os, datetime
+import sys, os, datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -22,7 +22,7 @@ from scheduler_engine.scheduler_engine import run_scheduler
 from user_credentials_db import register_user, authenticate_user
 from user_coverage_db import upsert_coverage, get_coverage_for_user, delete_coverage
 from user_availability_db import upsert_availability, get_availability_for_user, clear_availability
-from user_tasks_db import add_task, get_tasks_for_user, delete_task
+from user_tasks_db import add_task, get_tasks_for_user, delete_task, update_task
 from user_session_db import check_and_update_session
 from user_schedule_db import save_schedule, get_saved_schedule, get_previous_schedule
 from notification_routes import notify_bp
@@ -238,3 +238,32 @@ if __name__ == "__main__":
 
 
 
+
+@app.put("/api/tasks/<int:task_id>")
+def edit_task(task_id):
+    HOURS_MAP = {
+        ("Assignment","Hard"): 3.0, ("Assignment","Medium"): 2.0, ("Assignment","Easy"): 1.5,
+        ("Lab","Hard"): 2.0,        ("Lab","Medium"): 1.5,        ("Lab","Easy"): 0.75
+    }
+    try:
+        body = request.get_json(force=True) or {}
+        kwargs = {}
+        if "task_name" in body:
+            kwargs["task_name"] = body["task_name"]
+        if "difficulty" in body:
+            kwargs["difficulty"] = body["difficulty"]
+        if "deadline" in body:
+            kwargs["deadline"] = datetime.date.fromisoformat(body["deadline"])
+        task_type = body.get("task_type")
+        difficulty = body.get("difficulty")
+        if task_type and difficulty:
+            hrs = HOURS_MAP.get((task_type, difficulty))
+            if hrs:
+                kwargs["hours_required"] = hrs
+        r = update_task(task_id, **kwargs)
+        return _ok({"id": r.id, "task_name": r.task_name, "difficulty": r.difficulty,
+                    "hours_required": r.hours_required, "deadline": str(r.deadline)})
+    except ValueError as e:
+        return _err(str(e), 404)
+    except Exception as e:
+        return _err(str(e))
