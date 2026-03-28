@@ -125,12 +125,16 @@ export default function DashboardPage() {
     setShowHoursModal(true);
   };
 
-  const handleSaveHours = async () => {
-    try {
-      await saveAvailability(user.username, DAYS.map((d) => ({ day_label: d, available_hours: hours[d] })));
-      setShowHoursModal(false);
-      setShowSuccessModal("hours");
-    } catch {}
+  const handleSaveHours = () => {
+    const previousHours = hours;
+    setShowHoursModal(false);
+    setShowSuccessModal("hours");
+    saveAvailability(user.username, DAYS.map((d) => ({ day_label: d, available_hours: hours[d] })))
+      .catch(() => {
+        setHours(previousHours);
+        setShowSuccessModal(null);
+        setError("Failed to save hours. Please try again.");
+      });
   };
 
   const handleReturningHoursYes = () => { setShowReturningModal(false); setLoginStatus(null); openHoursModal(); };
