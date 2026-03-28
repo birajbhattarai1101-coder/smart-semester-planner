@@ -49,6 +49,19 @@ export default function DashboardPage() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+  const [taskError, setTaskError] = useState("");
+
+  const VALID_ASSIGNMENT_SUBJECTS = ["AI", "DBMS", "OS", "OOAD", "Embedded", "Economics",
+    "artificial intelligence", "operating system", "embedded system", "engineering economics",
+    "ooad", "dbms", "ai", "os"];
+  const VALID_LAB_SUBJECTS = ["AI", "DBMS", "OS", "Embedded", "OOAD",
+    "ai lab", "dbms lab", "os lab", "embedded", "ooad lab"];
+
+  const isValidSubject = (name, type) => {
+    const lower = name.toLowerCase();
+    const validList = type === "Assignment" ? VALID_ASSIGNMENT_SUBJECTS : VALID_LAB_SUBJECTS;
+    return validList.some(s => lower.includes(s.toLowerCase()));
+  };
   const loginHandled = useRef(false);
   const [error, setError] = useState("");
 
@@ -165,9 +178,17 @@ export default function DashboardPage() {
   const handleReturningTasksNo = () => { setShowReturningModal(false); setLoginStatus(null); navigate("/view-schedule"); };
 
   const handleAddTask = async () => {
-    if (!taskForm.task_name || !taskForm.deadline || !taskForm.subject) return;
+    if (!taskForm.task_name || !taskForm.deadline) return;
+    if (!isValidSubject(taskForm.task_name, showTaskModal)) {
+      const validNames = showTaskModal === "Assignment"
+        ? "AI, DBMS, OS, OOAD, Embedded System, Economics"
+        : "AI, DBMS, OS, Embedded System, OOAD";
+      setTaskError(`Invalid subject. Only 6th sem subjects allowed: ${validNames}`);
+      return;
+    }
+    setTaskError("");
     try {
-      await addTask({ user_id: user.username, task_name: taskForm.task_name, task_type: showTaskModal, subject: taskForm.subject, difficulty: taskForm.difficulty, deadline: taskForm.deadline });
+      await addTask({ user_id: user.username, task_name: taskForm.task_name, task_type: showTaskModal, subject: taskForm.task_name, difficulty: taskForm.difficulty, deadline: taskForm.deadline });
       setTaskForm({ task_name: "", subject: "", difficulty: "Medium", deadline: "" });
       setShowTaskModal(null);
       await fetchTasks();
@@ -384,8 +405,9 @@ export default function DashboardPage() {
             <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Deadline</label>
             <input type="date" value={taskForm.deadline} min={new Date().toISOString().split("T")[0]} onChange={e => setTaskForm(p => ({ ...p, deadline: e.target.value }))}
               style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: "24px" }} />
+            {taskError && <p style={{ fontSize: "12px", color: "#DC2626", fontWeight: 600, marginBottom: "12px", background: "#FEF2F2", padding: "8px 12px", borderRadius: "6px", border: "1px solid #FECACA" }}>⚠️ {taskError}</p>}
             <div style={{ display: "flex", gap: "12px" }}>
-              <button onClick={() => setShowTaskModal(null)}
+              <button onClick={() => { setShowTaskModal(null); setTaskError(""); }}
                 style={{ flex: 1, background: "none", border: "1.5px solid #D9CEC4", color: "#2C1810", padding: "12px", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                 Cancel
               </button>
