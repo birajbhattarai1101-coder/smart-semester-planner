@@ -234,27 +234,81 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
 
     daily_cap = _get_daily_cap(total_study_budget, total_week_hours)
 
+    # Minimum study time per priority label
+    PRIORITY_MIN = {"CRITICAL": 1.0, "HIGH": 1.0, "MEDIUM": 0.75, "LOW": 0.5}
+
+    def get_min(s):
+        return PRIORITY_MIN.get(s.get("priority_label", "LOW"), 0.5)
+
     def distribute_to_subjects(budget, subjects):
         alloc = {s["subject"]: 0.0 for s in subjects}
-        remaining = budget
-        for s in subjects:
-            if remaining >= STUDY_MIN_WEEK:
-                alloc[s["subject"]] = STUDY_MIN_WEEK
-                remaining = round(remaining - STUDY_MIN_WEEK, 4)
-        if remaining > 0.01:
-            total_score = sum(s["priority_score"] for s in subjects) or 1.0
-            for s in subjects:
-                if remaining <= 0.01: break
-                extra = round(remaining * (s["priority_score"] / total_score), 2)
-                give = min(extra, remaining)
-                alloc[s["subject"]] = round(alloc[s["subject"]] + give, 2)
-                remaining = round(remaining - give, 4)
-        if remaining > 0.01:
+        remaining = round(budget, 4)
+
+        # Sort by priority so high priority subjects are guaranteed first
+        by_priority = sorted(subjects, key=lambda x: (
+            {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}.get(x.get("priority_label", "LOW"), 3),
+            -x["priority_score"]
+        ))
+
+        total_min_needed = sum(get_min(s) for s in subjects)
+
+        if remaining >= total_min_needed:
+            # Budget is enough — give everyone their priority minimum first
+            for s in by_priority:
+                min_hrs = get_min(s)
+                alloc[s["subject"]] = min_hrs
+                remaining = round(remaining - min_hrs, 4)
+            # Distribute leftover proportionally by priority score
+            if remaining > 0.01:
+                total_score = sum(s["priority_score"] for s in subjects) or 1.0
+                for idx, s in enumerate(subjects):
+                    if remaining <= 0.01: break
+                    if idx == len(subjects) - 1:
+                        give = remaining
+                    else:
+                        give = round(remaining * (s["priority_score"] / total_score), 2)
+                    give = min(give, remaining)
+                    alloc[s["subject"]] = round(alloc[s["subject"]] + give, 2)
+                    remaining = round(remaining - give, 4)
+        else:
+            # Budget is tight — assign priority minimums to as many subjects as possible
+            # High priority subjects get served first, low priority dropped with caution
+            scheduled = []
+            skipped = []
+            for s in by_priority:
+                min_hrs = get_min(s)
+                if remaining >= min_hrs:
+                    alloc[s["subject"]] = min_hrs
+                    remaining = round(remaining - min_hrs, 4)
+                    scheduled.append(s)
+                else:
+                    skipped.append(s)
+            # Give any leftover to top priority subject
+            if remaining > 0.01 and scheduled:
+                top = scheduled[0]
+                alloc[top["subject"]] = round(alloc[top["subject"]] + remaining, 2)
+            # Mark skipped subjects with 0 so they show caution in schedule
+            for s in skipped:
+                alloc[s["subject"]] = -1.0  # sentinel for caution row
+
+        if remaining > 0.01 and subjects:
             top = sorted(subjects, key=lambda x: x["priority_score"], reverse=True)
-            alloc[top[0]["subject"]] = round(alloc[top[0]["subject"]] + remaining, 2)
+            if alloc[top[0]["subject"]] > 0:
+                alloc[top[0]["subject"]] = round(alloc[top[0]["subject"]] + remaining, 2)
         return alloc
 
     study_alloc = distribute_to_subjects(total_study_budget, subject_priorities)
+
+    # Add caution rows for subjects skipped due to tight budget
+    for s in subject_priorities:
+        if study_alloc.get(s["subject"], 0) == -1.0:
+            schedule_rows.append({
+                "day": day_slots[0]["day_label"], "date": str(day_slots[0]["date"]),
+                "task_type": "Study", "subject": s["subject"],
+                "task_name": f"Study {s['subject']} ⚠️ Not enough hours this week — increase availability",
+                "allocated_hours": 0.0, "deadline": "-",
+                "urgency_label": s.get("priority_label", "LOW")
+            })
 
     study_queue = sorted(
         [{"subject": s["subject"], "hrs_remaining": study_alloc[s["subject"]],
