@@ -386,8 +386,9 @@ export default function DashboardPage() {
             <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Task Name</label>
             <input type="text" placeholder={showTaskModal === "Assignment" ? "e.g. DBMS Assignment 1" : "e.g. OS Lab Report 2"} value={taskForm.task_name}
               autoComplete="off"
-              onChange={e => setTaskForm(p => ({ ...p, task_name: e.target.value }))}
-              style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: "16px" }} />
+              onChange={e => { setTaskForm(p => ({ ...p, task_name: e.target.value })); if (taskError) setTaskError(""); }}
+              style={{ width: "100%", padding: "11px 14px", border: taskError ? "1.5px solid #DC2626" : "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: "#2C1810", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: taskError ? "6px" : "16px", background: taskError ? "#FFF5F5" : "white" }} />
+            {taskError && <p style={{ fontSize: "12px", color: "#DC2626", fontWeight: 600, marginBottom: "10px" }}>⚠️ {taskError}</p>}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
               <div>
                 <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Difficulty</label>
