@@ -33,6 +33,14 @@ def get_coverage_for_user(user_id):
     finally:
         db.close()
 
+def delete_all_coverage(user_id):
+    db = SessionLocal()
+    try:
+        db.query(UserCoverage).filter_by(user_id=user_id).delete()
+        db.commit()
+    finally:
+        db.close()
+
 def delete_coverage(user_id, subject):
     db = SessionLocal()
     try:

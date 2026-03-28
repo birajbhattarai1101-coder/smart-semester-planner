@@ -20,9 +20,9 @@ from historic_priority_engine.historic_priority_engine import run_historic_prior
 from task_priority_engine.task_priority_engine import run_task_priority_engine
 from scheduler_engine.scheduler_engine import run_scheduler
 from user_credentials_db import register_user, authenticate_user
-from user_coverage_db import upsert_coverage, get_coverage_for_user, delete_coverage
+from user_coverage_db import upsert_coverage, get_coverage_for_user, delete_coverage, delete_all_coverage
 from user_availability_db import upsert_availability, get_availability_for_user, clear_availability
-from user_tasks_db import add_task, get_tasks_for_user, delete_task, update_task
+from user_tasks_db import add_task, get_tasks_for_user, delete_task, update_task, clear_tasks
 from user_session_db import check_and_update_session
 from user_schedule_db import save_schedule, get_saved_schedule, get_previous_schedule
 from notification_routes import notify_bp
@@ -131,6 +131,27 @@ def create_task():
 @app.get("/api/tasks/<user_id>")
 def list_tasks(user_id):
     try: return _ok({"user_id":user_id,"tasks":get_tasks_for_user(user_id)})
+    except Exception as e: return _err(str(e))
+
+@app.delete("/api/tasks/clear/<user_id>")
+def clear_all_tasks(user_id):
+    try:
+        clear_tasks(user_id)
+        return _ok({"cleared": user_id})
+    except Exception as e: return _err(str(e))
+
+@app.delete("/api/coverage/<user_id>")
+def clear_all_coverage(user_id):
+    try:
+        delete_all_coverage(user_id)
+        return _ok({"cleared": user_id})
+    except Exception as e: return _err(str(e))
+
+@app.delete("/api/availability/<user_id>")
+def clear_all_availability(user_id):
+    try:
+        clear_availability(user_id)
+        return _ok({"cleared": user_id})
     except Exception as e: return _err(str(e))
 
 @app.delete("/api/tasks/<int:task_id>")

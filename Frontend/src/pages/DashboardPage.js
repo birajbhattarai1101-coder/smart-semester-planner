@@ -11,6 +11,13 @@ const SUBJECTS = [
   { key: "Embedded", label: "Embedded System(ES)" },
   { key: "Economics", label: "Engineering Economics" },
 ];
+const LAB_SUBJECTS = [
+  { key: "AI", label: "AI Lab" },
+  { key: "DBMS", label: "DBMS Lab" },
+  { key: "OS", label: "OS Lab" },
+  { key: "Embedded", label: "Embedded System Lab" },
+  { key: "OOAD", label: "OOAD Lab" },
+];
 const ALL_DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const today = new Date();
 const DAYS = Array.from({length: 7}, (_, i) => ALL_DAYS[(today.getDay() + i) % 7]);
@@ -31,7 +38,7 @@ export default function DashboardPage() {
   const [showHoursModal, setShowHoursModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(null);
-  const [taskForm, setTaskForm] = useState({ task_name: "", difficulty: "Medium", deadline: "" });
+  const [taskForm, setTaskForm] = useState({ task_name: "", subject: "", difficulty: "Medium", deadline: "" });
   const [editTask, setEditTask] = useState(null);
   const [editForm, setEditForm] = useState({ task_name: "", difficulty: "Medium", deadline: "" });
   const [generating, setGenerating] = useState(false);
@@ -143,10 +150,10 @@ export default function DashboardPage() {
   const handleReturningTasksNo = () => { setShowReturningModal(false); setLoginStatus(null); navigate("/view-schedule"); };
 
   const handleAddTask = async () => {
-    if (!taskForm.task_name || !taskForm.deadline) return;
+    if (!taskForm.task_name || !taskForm.deadline || !taskForm.subject) return;
     try {
-      await addTask({ user_id: user.username, task_name: taskForm.task_name, task_type: showTaskModal, subject: "General", difficulty: taskForm.difficulty, deadline: taskForm.deadline });
-      setTaskForm({ task_name: "", difficulty: "Medium", deadline: "" });
+      await addTask({ user_id: user.username, task_name: taskForm.task_name, task_type: showTaskModal, subject: taskForm.subject, difficulty: taskForm.difficulty, deadline: taskForm.deadline });
+      setTaskForm({ task_name: "", subject: "", difficulty: "Medium", deadline: "" });
       setShowTaskModal(null);
       await fetchTasks();
     } catch {}
@@ -330,6 +337,14 @@ export default function DashboardPage() {
             <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#2C1810", marginBottom: "24px" }}>
               Add {showTaskModal === "Assignment" ? "Assignment" : "Lab Report"}
             </h3>
+            <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Subject</label>
+            <select value={taskForm.subject} onChange={e => { const opt = e.target.options[e.target.selectedIndex]; setTaskForm(p => ({ ...p, subject: e.target.value, task_name: e.target.value ? opt.text + (showTaskModal === "Assignment" ? " Assignment" : " Lab Report") : "" })); }}
+              style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #D9CEC4", borderRadius: "8px", fontSize: "14px", color: taskForm.subject ? "#2C1810" : "#8C7B70", fontFamily: "inherit", outline: "none", background: "white", boxSizing: "border-box", marginBottom: "16px" }}>
+              <option value="">-- Select Subject --</option>
+              {(showTaskModal === "Assignment" ? SUBJECTS : LAB_SUBJECTS).map(s => (
+                <option key={s.key} value={s.key}>{s.label}</option>
+              ))}
+            </select>
             <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color: "#8C7B70", display: "block", marginBottom: "6px" }}>Task Name</label>
             <input type="text" placeholder={showTaskModal === "Assignment" ? "e.g. DBMS Assignment 1" : "e.g. OS Lab Report 2"} value={taskForm.task_name}
               autoComplete="off"

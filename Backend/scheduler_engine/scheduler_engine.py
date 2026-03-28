@@ -58,6 +58,9 @@ def run_scheduler(availability, task_priorities, subject_priorities, start_offse
         idxs = get_eligible_indices(deadline_days)
         return sum(day_remaining[i] for i in idxs)
 
+    # Filter out tasks whose deadline has already passed (skip entirely)
+    task_queue = [t for t in task_queue if t["deadline_days"] > 0]
+
     # Group tasks that share the same deadline_days value
     deadline_groups = defaultdict(list)
     for t in task_queue:
