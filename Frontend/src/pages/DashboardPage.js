@@ -249,13 +249,13 @@ export default function DashboardPage() {
 
         {error && <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#DC2626", marginBottom: "16px" }}>{error}</div>}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
+        <div style={{ display: "flex", gap: "16px", marginBottom: "20px", alignItems: "flex-start" }}>
           {[
             { type: "Assignment", icon: "fa-pen-to-square", label: "Assignments", sub: "Click to add task", items: assignments },
             { type: "Lab", icon: "fa-file-lines", label: "Lab Reports", sub: "Click to add report", items: labs },
           ].map(col => (
-            <div key={col.type} style={{ background: "white", borderRadius: "16px", border: "1px solid #EEE9E0", overflow: "hidden" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", cursor: "pointer" }} onClick={() => setShowTaskModal(col.type)}>
+            <div key={col.type} style={{ background: "white", borderRadius: "16px", border: "1px solid #EEE9E0", overflow: "hidden", flex: "1" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", cursor: "pointer" }} onClick={() => { setTaskForm({ task_name: "", subject: "", difficulty: "Medium", deadline: "" }); setTaskError(""); setShowTaskModal(col.type); }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                   <div style={{ width: "44px", height: "44px", background: "#FBF5EC", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#B8862E", fontSize: "18px", flexShrink: 0 }}>
                     <i className={"fa-solid " + col.icon} />
