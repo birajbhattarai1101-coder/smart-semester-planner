@@ -46,7 +46,7 @@ def run_historic_priority_engine(coverage_map, csv_path=None):
     engine.reset()
     for _, row in avg_df.iterrows():
         subj = row["subject"]
-        cov = float(coverage_map.get(subj, 50))
+        cov = float(coverage_map.get(subj, 0))
         engine.declare(SubjectFact(
             subject=subj,
             avg_failure_rate=float(row["avg_failure_rate"]),
